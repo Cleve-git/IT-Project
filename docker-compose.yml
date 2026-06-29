@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: cda-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: conversational_analyst
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d conversational_analyst"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: cda-backend
+    restart: always
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:password@db:5432/conversational_analyst
+      - DATABASE_SYNC_URL=postgresql://postgres:password@db:5432/conversational_analyst
+      - GROQ_API_KEY=mock-groq-key
+      - SUPABASE_URL=https://mock.supabase.co
+      - SUPABASE_ANON_KEY=mock-anon-key
+      - SUPABASE_JWT_SECRET=mock-jwt-secret-must-be-long-enough-32-chars
+      - ENVIRONMENT=development
+      - SQL_GENERATION_MODEL=llama-3.3-70b-versatile
+      - EXPLANATION_MODEL=llama-3-8b-8192
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: cda-frontend
+    restart: always
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NEXT_PUBLIC_SUPABASE_URL=https://mock.supabase.co
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=mock-anon-key
+      - NODE_ENV=development
+    depends_on:
+      - backend
+
+volumes:
+  postgres-data:
