@@ -27,6 +27,13 @@ export interface Message {
   visualization_config: Record<string, any> | null;
   explanation: string | null;
   created_at: string;
+  
+  // New API response fields
+  type?: 'conversation' | 'query_result';
+  message?: string | null;
+  sql?: string | null;
+  results?: Record<string, any>[] | null;
+  visualization?: Record<string, any> | null;
 }
 
 export interface QueryLog {

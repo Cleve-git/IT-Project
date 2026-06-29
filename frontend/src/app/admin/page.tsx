@@ -1,15 +1,14 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
   ShieldAlert, LogOut, MessageSquare, ShieldCheck, 
-  BarChart3, Users, FileSpreadsheet, History, Cpu, Database
+  BarChart3, Users, FileSpreadsheet, History, Cpu, Database, Shield
 } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../components/ui/tabs';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../components/ui/card';
+import { Card, CardHeader, CardTitle, CardDescription } from '../../components/ui/card';
 import AnalyticsCard from '../../components/admin/AnalyticsCard';
 import UserManagementTable from '../../components/admin/UserManagementTable';
 import DocumentIngestionView from '../../components/admin/DocumentIngestionView';
@@ -19,6 +18,7 @@ import BenchmarkRunner from '../../components/admin/BenchmarkRunner';
 export default function AdminPage() {
   const router = useRouter();
   const { user, isAuthenticated, clearSession } = useAuthStore();
+  const [activeTab, setActiveTab] = useState<'analytics' | 'users' | 'documents' | 'logs' | 'benchmarks'>('analytics');
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -33,8 +33,8 @@ export default function AdminPage() {
 
   if (!isAuthenticated || !user) {
     return (
-      <div className="min-h-screen bg-[#09090b] flex items-center justify-center text-zinc-500 text-sm">
-        Validating administrator token...
+      <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground text-xs font-mono">
+        Validating administrator credentials...
       </div>
     );
   }
@@ -42,32 +42,32 @@ export default function AdminPage() {
   // RBAC Client-Side Guard
   if (user.role !== 'admin') {
     return (
-      <div className="min-h-screen bg-[#09090b] flex items-center justify-center px-4">
-        <Card className="max-w-md w-full border-rose-500/20 bg-rose-950/5 p-6 text-center space-y-4">
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+        <Card className="max-w-md w-full border-danger/20 bg-danger/5 p-6 text-center space-y-4 shadow-sm">
           <div className="flex justify-center">
-            <div className="h-12 w-12 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-full flex items-center justify-center">
+            <div className="h-12 w-12 bg-danger/10 border border-danger/20 text-danger rounded-full flex items-center justify-center">
               <ShieldAlert className="h-6 w-6" />
             </div>
           </div>
           <div className="space-y-1">
-            <CardTitle className="text-white text-lg">Access Denied</CardTitle>
-            <CardDescription className="text-zinc-500 text-xs">
+            <CardTitle className="text-foreground text-lg font-bold">Access Denied</CardTitle>
+            <CardDescription className="text-muted-foreground text-xs font-medium">
               Role-Based Access Control blocked access to this directory.
             </CardDescription>
           </div>
-          <p className="text-xs text-zinc-400 leading-relaxed">
+          <p className="text-xs text-muted-foreground leading-relaxed">
             Your current account role (<strong>{user.role}</strong>) does not have authorization policies to view administrative dashboards.
           </p>
           <div className="flex justify-center space-x-3 pt-2">
             <Link 
               href="/dashboard" 
-              className="px-4 py-2 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-300 text-xs font-semibold rounded-lg transition-colors"
+              className="px-4 py-2 bg-card border border-border hover:bg-muted text-foreground text-xs font-semibold rounded-[10px] transition-colors"
             >
               Back to Chat
             </Link>
             <button
               onClick={handleLogout}
-              className="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold rounded-lg cursor-pointer transition-colors"
+              className="px-4 py-2 bg-danger hover:bg-danger/90 text-white text-xs font-semibold rounded-[10px] cursor-pointer transition-colors"
             >
               Sign Out
             </button>
@@ -77,98 +77,107 @@ export default function AdminPage() {
     );
   }
 
-  return (
-    <div className="min-h-screen bg-[#09090b] text-zinc-100 flex flex-col justify-between">
-      
-      {/* Top Navbar */}
-      <header className="h-16 border-b border-zinc-900 bg-zinc-950/80 backdrop-blur-md sticky top-0 z-30 px-6 flex items-center justify-between">
-        <div className="flex items-center space-x-2.5">
-          <div className="h-8 w-8 bg-gradient-to-tr from-indigo-500 to-violet-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-600/10">
-            <Database className="h-4 w-4 text-white" />
-          </div>
-          <div>
-            <span className="font-bold text-sm text-white tracking-tight">Conversational Data Analyst</span>
-            <span className="text-[10px] text-zinc-500 font-mono block -mt-0.5">Admin Management Console</span>
-          </div>
-        </div>
+  const adminNavItems = [
+    { id: 'analytics' as const, label: 'System Analytics', icon: BarChart3 },
+    { id: 'users' as const, label: 'User Policies', icon: Users },
+    { id: 'documents' as const, label: 'Ingest Documents', icon: FileSpreadsheet },
+    { id: 'logs' as const, label: 'Execution Logs', icon: History },
+    { id: 'benchmarks' as const, label: 'Compiler Diagnostics', icon: Cpu }
+  ];
 
-        <div className="flex items-center space-x-4">
+  return (
+    <div className="min-h-screen bg-background text-foreground flex">
+      
+      {/* 1. Fixed Left Sidebar */}
+      <aside className="w-64 h-screen fixed left-0 top-0 border-r border-border bg-card flex flex-col justify-between p-4 z-20">
+        <div className="space-y-6">
+          {/* Logo Brand */}
+          <div className="flex items-center space-x-2.5 px-2">
+            <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center shadow-sm">
+              <Database className="h-4 w-4 text-white" />
+            </div>
+            <div>
+              <span className="font-bold text-sm text-foreground tracking-tight block">Conda AI</span>
+              <span className="text-[10px] text-muted-foreground font-mono block -mt-0.5">Admin Management</span>
+            </div>
+          </div>
+
+          {/* Navigation link back to chat */}
           <Link
             href="/dashboard"
-            className="text-xs font-semibold text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50 px-3.5 py-1.5 rounded-lg flex items-center space-x-1.5 transition-all"
+            className="w-full flex items-center justify-center space-x-2 border border-border hover:border-primary/45 hover:bg-muted py-2.5 rounded-[10px] text-xs font-semibold text-muted-foreground hover:text-foreground transition-all duration-150 ease-out"
           >
-            <MessageSquare className="h-3.5 w-3.5 text-zinc-500" />
+            <MessageSquare className="h-4 w-4 text-primary" />
             <span>Chat Workspace</span>
           </Link>
 
-          <Link
-            href="/admin"
-            className="text-xs font-semibold text-indigo-400 bg-indigo-950/30 border border-indigo-500/20 px-3.5 py-1.5 rounded-lg flex items-center space-x-1.5"
-          >
-            <ShieldCheck className="h-3.5 w-3.5" />
-            <span>Admin Panel</span>
-          </Link>
+          {/* Admin Navigation list */}
+          <div className="space-y-1.5 pr-1">
+            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block px-2 mb-2">Management Tabs</span>
+            {adminNavItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = activeTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className={`w-full text-left flex items-center space-x-2.5 px-3 py-2.5 rounded-lg text-xs cursor-pointer transition-all duration-150 ease-out border ${
+                    isActive
+                      ? 'bg-primary/5 text-primary border-primary/20 font-semibold'
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground border-transparent'
+                  }`}
+                >
+                  <Icon className="h-4 w-4" />
+                  <span>{item.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
-          <div className="h-4 w-px bg-zinc-800" />
-
+        {/* User tag info */}
+        <div className="space-y-3 pt-4 border-t border-border">
+          <div className="p-3 bg-muted/60 rounded-lg border border-border/80 text-[11px] text-muted-foreground flex flex-col gap-0.5">
+            <div className="font-semibold text-foreground truncate">{user.email}</div>
+            <div className="flex items-center space-x-1 mt-0.5 text-[9px] uppercase tracking-wider font-bold text-primary">
+              <Shield className="h-2.5 w-2.5 mr-0.5" /> Admin Console
+            </div>
+          </div>
           <button
             onClick={handleLogout}
-            className="text-xs font-semibold text-zinc-400 hover:text-rose-400 flex items-center space-x-1 cursor-pointer transition-colors"
-            title="Sign Out"
+            className="w-full text-xs font-semibold text-muted-foreground hover:text-danger flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-danger/5 transition-colors cursor-pointer"
           >
-            <LogOut className="h-3.5 w-3.5" />
+            <LogOut className="h-4 w-4" />
             <span>Sign Out</span>
           </button>
         </div>
-      </header>
+      </aside>
 
-      {/* Main Admin layout panel */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-6 space-y-6">
+      {/* Outer Content Frame wrapper (offset left by sidebar width 64) */}
+      <div className="flex-1 ml-64 flex flex-col min-h-screen">
         
-        <Tabs defaultValue="analytics">
-          <TabsList className="bg-zinc-950/60 p-1 border-zinc-900 w-full md:w-auto flex overflow-x-auto">
-            <TabsTrigger value="analytics" className="flex items-center space-x-1.5 text-xs py-1.5 flex-1 md:flex-none">
-              <BarChart3 className="h-3.5 w-3.5 text-indigo-400" />
-              <span>Analytics</span>
-            </TabsTrigger>
-            <TabsTrigger value="users" className="flex items-center space-x-1.5 text-xs py-1.5 flex-1 md:flex-none">
-              <Users className="h-3.5 w-3.5 text-violet-400" />
-              <span>User Policies</span>
-            </TabsTrigger>
-            <TabsTrigger value="documents" className="flex items-center space-x-1.5 text-xs py-1.5 flex-1 md:flex-none">
-              <FileSpreadsheet className="h-3.5 w-3.5 text-rose-400" />
-              <span>Ingest Files</span>
-            </TabsTrigger>
-            <TabsTrigger value="logs" className="flex items-center space-x-1.5 text-xs py-1.5 flex-1 md:flex-none">
-              <History className="h-3.5 w-3.5 text-blue-400" />
-              <span>Query Logs</span>
-            </TabsTrigger>
-            <TabsTrigger value="benchmarks" className="flex items-center space-x-1.5 text-xs py-1.5 flex-1 md:flex-none">
-              <Cpu className="h-3.5 w-3.5 text-amber-400" />
-              <span>Compiler Diagnostics</span>
-            </TabsTrigger>
-          </TabsList>
-
-          <div className="mt-6 bg-zinc-950/40 border border-zinc-900/60 rounded-xl p-6 shadow-xl backdrop-blur-sm min-h-[50vh]">
-            <TabsContent value="analytics">
-              <AnalyticsCard />
-            </TabsContent>
-            <TabsContent value="users">
-              <UserManagementTable />
-            </TabsContent>
-            <TabsContent value="documents">
-              <DocumentIngestionView />
-            </TabsContent>
-            <TabsContent value="logs">
-              <LogViewer />
-            </TabsContent>
-            <TabsContent value="benchmarks">
-              <BenchmarkRunner />
-            </TabsContent>
+        {/* 2. Sticky Top Navigation Bar */}
+        <header className="h-16 border-b border-border bg-card/85 backdrop-blur-md sticky top-0 z-10 px-6 flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <ShieldCheck className="h-4 w-4 text-primary" />
+            <h1 className="font-bold text-sm text-foreground">
+              {adminNavItems.find(item => item.id === activeTab)?.label || "Admin Workspace"}
+            </h1>
           </div>
-        </Tabs>
+        </header>
 
-      </main>
+        {/* 3. Main Scrollable Content Area */}
+        <main className="flex-1 p-6 overflow-y-auto bg-background">
+          <div className="max-w-6xl mx-auto bg-card border border-border rounded-[12px] p-6 shadow-sm">
+            {activeTab === 'analytics' && <AnalyticsCard />}
+            {activeTab === 'users' && <UserManagementTable />}
+            {activeTab === 'documents' && <DocumentIngestionView />}
+            {activeTab === 'logs' && <LogViewer />}
+            {activeTab === 'benchmarks' && <BenchmarkRunner />}
+          </div>
+        </main>
+
+      </div>
 
     </div>
   );

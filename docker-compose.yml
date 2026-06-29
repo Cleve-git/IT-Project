@@ -48,6 +48,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: cda-frontend
+    command: npm run dev
     restart: always
     ports:
       - "3000:3000"

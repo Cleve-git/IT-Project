@@ -26,7 +26,7 @@ export const TabsList = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HT
   ({ className = "", ...props }, ref) => (
     <div
       ref={ref}
-      className={`inline-flex h-10 items-center justify-center rounded-lg bg-zinc-900 p-1 text-zinc-400 border border-zinc-800 ${className}`}
+      className={`inline-flex h-10 items-center justify-center rounded-[8px] bg-muted p-1 text-muted-foreground border border-border/80 ${className}`}
       {...props}
     />
   )
@@ -50,10 +50,10 @@ export const TabsTrigger = React.forwardRef<HTMLButtonElement, TabsTriggerProps>
         role="tab"
         aria-selected={isActive}
         onClick={() => context.onValueChange(value)}
-        className={`inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-all focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 cursor-pointer ${
+        className={`inline-flex items-center justify-center whitespace-nowrap rounded-[6px] px-3.5 py-1.5 text-xs font-semibold transition-all duration-150 ease-out focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 cursor-pointer ${
           isActive 
-            ? "bg-zinc-800 text-white shadow-sm" 
-            : "hover:bg-zinc-800/40 hover:text-zinc-200"
+            ? "bg-card text-foreground shadow-sm" 
+            : "hover:text-foreground hover:bg-card/30"
         } ${className}`}
         {...props}
       >

@@ -3,89 +3,191 @@
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Sparkles, ShieldAlert, LogOut, MessageSquare, ShieldCheck, Database } from 'lucide-react';
+import { 
+  Sparkles, LogOut, MessageSquare, ShieldCheck, 
+  Database, Plus, Trash2, Shield
+} from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
+import { useChatStore } from '../../store/useChatStore';
+import api from '../../services/api';
 import { ChatWindow } from '../../components/chat/ChatWindow';
+import { Button } from '../../components/ui/button';
 
 export default function DashboardPage() {
   const router = useRouter();
   const { user, isAuthenticated, clearSession } = useAuthStore();
+  const { 
+    conversations, currentConversationId, 
+    setConversations, setCurrentConversationId, setMessages, setLoading 
+  } = useChatStore();
 
+  // 1. Redirect if not authenticated
   useEffect(() => {
-    // Client-side authentication validation
     if (!isAuthenticated) {
       router.push('/login');
     }
   }, [isAuthenticated, router]);
+
+  // 2. Fetch Conversations on Mount
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const fetchConvs = async () => {
+      try {
+        const list = await api.listConversations();
+        setConversations(list);
+      } catch (err) {
+        console.error("Failed to load conversations", err);
+      }
+    };
+    fetchConvs();
+  }, [isAuthenticated, setConversations]);
 
   const handleLogout = () => {
     clearSession();
     router.push('/login');
   };
 
+  const handleNewChat = () => {
+    setCurrentConversationId(null);
+    setMessages([]);
+  };
+
+  const handleDeleteChat = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    if (!confirm("Are you sure you want to delete this chat?")) return;
+    try {
+      await api.deleteConversation(id);
+      const list = await api.listConversations();
+      setConversations(list);
+      if (currentConversationId === id) {
+        handleNewChat();
+      }
+    } catch (err) {
+      console.error("Failed to delete chat", err);
+    }
+  };
+
   if (!isAuthenticated || !user) {
     return (
-      <div className="min-h-screen bg-[#09090b] flex items-center justify-center text-zinc-500 text-sm">
-        Validating user credentials...
+      <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground text-xs font-mono">
+        Validating user session...
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#09090b] text-zinc-100 flex flex-col justify-between">
+    <div className="min-h-screen bg-background text-foreground flex">
       
-      {/* Premium Top Navigation Bar */}
-      <header className="h-16 border-b border-zinc-900 bg-zinc-950/80 backdrop-blur-md sticky top-0 z-30 px-6 flex items-center justify-between">
-        
-        {/* Brand identity */}
-        <div className="flex items-center space-x-2.5">
-          <div className="h-8 w-8 bg-gradient-to-tr from-indigo-500 to-violet-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-600/10">
-            <Database className="h-4 w-4 text-white" />
+      {/* 1. Fixed Left Sidebar */}
+      <aside className="w-64 h-screen fixed left-0 top-0 border-r border-border bg-card flex flex-col justify-between p-4 z-20">
+        <div className="space-y-6">
+          {/* Logo Brand */}
+          <div className="flex items-center space-x-2.5 px-2">
+            <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center shadow-sm">
+              <Database className="h-4 w-4 text-white" />
+            </div>
+            <div>
+              <span className="font-bold text-sm text-foreground tracking-tight block">Conda AI</span>
+              <span className="text-[10px] text-muted-foreground font-mono block -mt-0.5">PostgreSQL compiler</span>
+            </div>
           </div>
-          <div>
-            <span className="font-bold text-sm text-white tracking-tight">Conversational Data Analyst</span>
-            <span className="text-[10px] text-zinc-500 font-mono block -mt-0.5">PostgreSQL compiler</span>
+
+          {/* New Chat Button */}
+          <Button 
+            onClick={handleNewChat}
+            variant="outline" 
+            className="w-full flex items-center justify-center space-x-2 border-border hover:border-primary/45 hover:bg-muted py-5 text-xs font-semibold"
+          >
+            <Plus className="h-4 w-4 text-primary" />
+            <span>New Analyst Chat</span>
+          </Button>
+
+          {/* Conversations history list */}
+          <div className="space-y-1.5 overflow-y-auto max-h-[60vh] pr-1">
+            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block px-2 mb-2">Recent Threads</span>
+            {conversations.length === 0 ? (
+              <span className="text-xs text-muted-foreground block px-2 italic">No chats yet</span>
+            ) : (
+              conversations.map((conv) => {
+                const isActive = currentConversationId === conv.conversation_id;
+                return (
+                  <div
+                    key={conv.conversation_id}
+                    onClick={() => setCurrentConversationId(conv.conversation_id)}
+                    className={`group flex items-center justify-between px-3 py-2.5 rounded-lg text-xs cursor-pointer transition-all duration-150 ease-out border ${
+                      isActive 
+                        ? 'bg-primary/5 text-primary border-primary/20 font-semibold' 
+                        : 'text-muted-foreground hover:bg-muted hover:text-foreground border-transparent'
+                    }`}
+                  >
+                    <span className="truncate pr-2 max-w-[170px]">{conv.title}</span>
+                    <button
+                      onClick={(e) => handleDeleteChat(e, conv.conversation_id)}
+                      className="opacity-0 group-hover:opacity-100 hover:text-danger p-0.5 rounded transition-opacity"
+                      title="Delete Conversation"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                );
+              })
+            )}
           </div>
         </div>
 
-        {/* Dashboard Actions */}
-        <div className="flex items-center space-x-4">
-          <Link
-            href="/dashboard"
-            className="text-xs font-semibold text-indigo-400 bg-indigo-950/30 border border-indigo-500/20 px-3.5 py-1.5 rounded-lg flex items-center space-x-1.5"
-          >
-            <MessageSquare className="h-3.5 w-3.5" />
-            <span>Chat Workspace</span>
-          </Link>
-
-          {user.role === 'admin' && (
-            <Link
-              href="/admin"
-              className="text-xs font-semibold text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50 px-3.5 py-1.5 rounded-lg flex items-center space-x-1.5 transition-all"
-            >
-              <ShieldCheck className="h-3.5 w-3.5 text-zinc-500" />
-              <span>Admin Panel</span>
-            </Link>
-          )}
-
-          <div className="h-4 w-px bg-zinc-800" />
-
+        {/* User tag info */}
+        <div className="space-y-3 pt-4 border-t border-border">
+          <div className="p-3 bg-muted/60 rounded-lg border border-border/80 text-[11px] text-muted-foreground flex flex-col gap-0.5">
+            <div className="font-semibold text-foreground truncate">{user.email}</div>
+            <div className="flex items-center space-x-1 mt-0.5 text-[9px] uppercase tracking-wider font-bold">
+              {user.role === 'admin' ? (
+                <span className="text-primary flex items-center"><Shield className="h-2.5 w-2.5 mr-0.5" /> Admin Sandbox</span>
+              ) : (
+                <span className="text-muted-foreground">User Analyst</span>
+              )}
+            </div>
+          </div>
           <button
             onClick={handleLogout}
-            className="text-xs font-semibold text-zinc-400 hover:text-rose-400 flex items-center space-x-1 cursor-pointer transition-colors"
-            title="Sign Out"
+            className="w-full text-xs font-semibold text-muted-foreground hover:text-danger flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-danger/5 transition-colors cursor-pointer"
           >
-            <LogOut className="h-3.5 w-3.5" />
+            <LogOut className="h-4 w-4" />
             <span>Sign Out</span>
           </button>
         </div>
+      </aside>
 
-      </header>
+      {/* Outer Content Frame wrapper (offset left by sidebar width 64) */}
+      <div className="flex-1 ml-64 flex flex-col min-h-screen">
+        
+        {/* 2. Sticky Top Navigation Bar */}
+        <header className="h-16 border-b border-border bg-card/85 backdrop-blur-md sticky top-0 z-10 px-6 flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <MessageSquare className="h-4 w-4 text-primary" />
+            <h1 className="font-bold text-sm text-foreground">Chat Workspace</h1>
+          </div>
 
-      {/* Main Workspace Frame */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-6 flex flex-col justify-center">
-        <ChatWindow />
-      </main>
+          <div className="flex items-center space-x-4">
+            {user.role === 'admin' && (
+              <Link
+                href="/admin"
+                className="text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted px-3.5 py-1.5 rounded-lg flex items-center space-x-1.5 transition-all border border-transparent hover:border-border"
+              >
+                <ShieldCheck className="h-3.5 w-3.5 text-primary" />
+                <span>Admin Panel</span>
+              </Link>
+            )}
+          </div>
+        </header>
+
+        {/* 3. Main Scrollable Content Area */}
+        <main className="flex-1 p-6 overflow-y-auto bg-background">
+          <div className="max-w-6xl mx-auto">
+            <ChatWindow />
+          </div>
+        </main>
+
+      </div>
 
     </div>
   );

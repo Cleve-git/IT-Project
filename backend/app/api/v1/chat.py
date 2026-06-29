@@ -12,6 +12,7 @@ from app.infrastructure.repositories.conversation_repository import Conversation
 from app.infrastructure.repositories.query_log_repository import QueryLogRepository
 from app.application.services.analyst_service import AnalystService
 from app.domain.models import Feedback
+from app.services.intent_service import IntentService
 
 router = APIRouter(prefix="/chat", tags=["Conversational Analyst"])
 
@@ -102,7 +103,74 @@ async def submit_query(
     # Save User message
     await conv_repo.add_message(conversation_id=conv_id, role="user", content=payload.query_text)
 
-    # 3. LLM SQL Generation
+    # 3. Intent Detection Layer
+    intent_service = IntentService()
+    intent = await intent_service.detect_intent(payload.query_text)
+
+    if intent != "DATA_QUERY":
+        if intent == "GREETING":
+            content = (
+                "Hello! 👋\n\n"
+                "I'm your Conversational Data Analyst.\n\n"
+                "I can help you:\n"
+                "• Analyze sales and revenue\n"
+                "• Generate SQL queries\n"
+                "• Create charts and reports\n"
+                "• Discover customer insights\n\n"
+                "Try asking:\n"
+                "• What are our top selling products?\n"
+                "• Show total revenue by month.\n"
+                "• Who are our top customers?"
+            )
+        elif intent == "HELP":
+            content = (
+                "I can:\n"
+                "• Query your business database using natural language.\n"
+                "• Generate SQL automatically.\n"
+                "• Create visualizations.\n"
+                "• Explain your data.\n"
+                "• Export results."
+            )
+        elif intent == "VISUALIZATION_REQUEST":
+            content = (
+                "To create charts or visualizations, query a business dataset (e.g. "
+                "'Show total revenue by customer') and I will automatically build a "
+                "Plotly chart recommendation for you."
+            )
+        elif intent == "EXPORT_REQUEST":
+            content = (
+                "To export data, query the business dataset you need, and then click the "
+                "'Download CSV' button in the results grid view."
+            )
+        elif intent == "EXPLAIN_SQL":
+            content = (
+                "To explain a query, ask a business question and I will outline both the "
+                "SQL structure and explain the results in plain business terms."
+            )
+        else: # SMALL_TALK or others
+            content = (
+                "I'm doing great, thank you! I'm here and ready to help you analyze your business database. "
+                "What data would you like to explore today?"
+            )
+
+        # Save Assistant message
+        assistant_msg = await conv_repo.add_message(
+            conversation_id=conv_id,
+            role="assistant",
+            content=content
+        )
+
+        # Log query log activity
+        await log_repo.log_query(
+            user_id=current_user.id,
+            query_text=payload.query_text,
+            executed_sql=None,
+            execution_duration_ms=0,
+            status="success"
+        )
+        return assistant_msg
+
+    # 4. LLM SQL Generation (Only run for DATA_QUERY)
     is_ambiguous, clarification_question, sql, reasoning = await analyst_service.generate_sql(
         payload.query_text, chat_history
     )

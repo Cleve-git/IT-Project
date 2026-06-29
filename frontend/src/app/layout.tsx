@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Conversational Data Analyst",
+  title: "Conda AI",
   description: "Natural language interface for executing secure, checked SQL on PostgreSQL databases, coupled with document intelligence table parsing.",
 };
 

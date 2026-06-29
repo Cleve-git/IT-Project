@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from typing import List, Dict, Optional, Any
 from datetime import datetime
 
@@ -46,6 +46,58 @@ class MessageResponse(BaseModel):
     visualization_config: Optional[Dict[str, Any]] = None
     explanation: Optional[str] = None
     created_at: datetime
+
+    # New API fields for intent-based UI rendering
+    type: str = "conversation"
+    message: Optional[str] = None
+    sql: Optional[str] = None
+    results: Optional[List[Dict[str, Any]]] = None
+    visualization: Optional[Dict[str, Any]] = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def populate_response_fields(cls, data: Any) -> Any:
+        if hasattr(data, "generated_sql"):
+            generated_sql = getattr(data, "generated_sql")
+            content = getattr(data, "content")
+            sql_results = getattr(data, "sql_results")
+            visualization_config = getattr(data, "visualization_config")
+        else:
+            generated_sql = data.get("generated_sql") if isinstance(data, dict) else None
+            content = data.get("content") if isinstance(data, dict) else ""
+            sql_results = data.get("sql_results") if isinstance(data, dict) else None
+            visualization_config = data.get("visualization_config") if isinstance(data, dict) else None
+
+        if not isinstance(data, dict):
+            # Parse SQLAlchemy ORM model to dictionary
+            res_dict = {
+                "message_id": getattr(data, "message_id"),
+                "conversation_id": getattr(data, "conversation_id"),
+                "role": getattr(data, "role"),
+                "content": getattr(data, "content"),
+                "generated_sql": getattr(data, "generated_sql"),
+                "sql_results": getattr(data, "sql_results"),
+                "visualization_config": getattr(data, "visualization_config"),
+                "explanation": getattr(data, "explanation"),
+                "created_at": getattr(data, "created_at"),
+            }
+        else:
+            res_dict = data.copy()
+
+        if generated_sql:
+            res_dict["type"] = "query_result"
+            res_dict["sql"] = generated_sql
+            res_dict["results"] = sql_results.get("rows", []) if (sql_results and isinstance(sql_results, dict)) else []
+            res_dict["visualization"] = visualization_config
+            res_dict["message"] = None
+        else:
+            res_dict["type"] = "conversation"
+            res_dict["message"] = content
+            res_dict["sql"] = None
+            res_dict["results"] = None
+            res_dict["visualization"] = None
+
+        return res_dict
 
     class Config:
         from_attributes = True

@@ -7,14 +7,14 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className = "", variant = "primary", size = "md", children, ...props }, ref) => {
-    const baseStyles = "inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 disabled:opacity-50 disabled:pointer-events-none cursor-pointer";
+    const baseStyles = "inline-flex items-center justify-center font-medium rounded-[10px] transition-all duration-150 ease-out focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50 disabled:pointer-events-none cursor-pointer";
     
     const variants = {
-      primary: "bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/20 active:scale-98",
-      secondary: "bg-zinc-800 hover:bg-zinc-700 text-zinc-100 border border-zinc-700/50 active:scale-98",
-      outline: "border border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-white active:scale-98",
-      ghost: "text-zinc-400 hover:bg-zinc-800/50 hover:text-white",
-      danger: "bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/20 active:scale-98"
+      primary: "bg-primary hover:bg-primary/95 text-primary-foreground shadow-sm shadow-primary/10 active:scale-[0.98]",
+      secondary: "bg-muted text-foreground border border-border hover:bg-border/60 active:scale-[0.98]",
+      outline: "border border-border text-muted-foreground hover:bg-muted hover:text-foreground active:scale-[0.98]",
+      ghost: "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
+      danger: "bg-danger hover:bg-danger/90 text-white shadow-sm shadow-danger/10 active:scale-[0.98]"
     };
 
     const sizes = {
@@ -35,3 +35,4 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   }
 );
 Button.displayName = "Button";
+export default Button;
