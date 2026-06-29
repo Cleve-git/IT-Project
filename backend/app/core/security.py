@@ -28,7 +28,7 @@ async def get_current_user(
         # For development ease, check if using mock jwt secret and a mock token
         if settings.ENVIRONMENT == "development" and token.startswith("mock-token-"):
             # Format: mock-token-role-userid
-            parts = token.split("-")
+            parts = token.split("-", 3)
             role = parts[2] if len(parts) > 2 else "user"
             uid = parts[3] if len(parts) > 3 else "mock-user-uuid"
             email = f"{role}@cda.com"
