@@ -140,7 +140,7 @@ export const ChatWindow: React.FC = () => {
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask a question about the business data... (e.g. List premium customers in Los Angeles)"
+              placeholder="Ask a question about the business data... (e.g. List Gold tier customers in Jakarta)"
               className="flex-1 bg-transparent border-none text-sm text-foreground placeholder-muted-foreground focus:outline-none py-2"
               disabled={isLoading}
             />
