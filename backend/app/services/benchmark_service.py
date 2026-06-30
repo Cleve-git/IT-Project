@@ -23,6 +23,66 @@ GOLDEN_TESTS = [
         "question": "What are our best selling products by quantity sold?",
         "gold_sql": "SELECT p.product_name, SUM(oi.quantity) as sold FROM products p JOIN order_items oi ON p.product_id = oi.product_id GROUP BY p.product_name ORDER BY sold DESC;",
         "gold_answer": "product_name"
+    },
+    {
+        "question": "How many customers do we have?",
+        "gold_sql": "SELECT COUNT(*) FROM customers;",
+        "gold_answer": "customer_count"
+    },
+    {
+        "question": "List all products with their unit prices.",
+        "gold_sql": "SELECT product_name, unit_price FROM products ORDER BY product_name;",
+        "gold_answer": "product_list"
+    },
+    {
+        "question": "What is the total number of orders?",
+        "gold_sql": "SELECT COUNT(*) FROM orders;",
+        "gold_answer": "order_count"
+    },
+    {
+        "question": "Show total payments by payment method.",
+        "gold_sql": "SELECT method, SUM(amount) as total FROM payments GROUP BY method ORDER BY total DESC;",
+        "gold_answer": "payment_by_method"
+    },
+    {
+        "question": "Which customers are from Jakarta?",
+        "gold_sql": "SELECT name, email FROM customers WHERE city = 'Jakarta';",
+        "gold_answer": "jakarta_customers"
+    },
+    {
+        "question": "What is the average order total?",
+        "gold_sql": "SELECT AVG(order_total) FROM orders;",
+        "gold_answer": "average_order_total"
+    },
+    {
+        "question": "Show monthly revenue totals.",
+        "gold_sql": "SELECT DATE_TRUNC('month', payment_date) as month, SUM(amount) as revenue FROM payments WHERE status = 'Success' GROUP BY month ORDER BY month;",
+        "gold_answer": "monthly_revenue"
+    },
+    {
+        "question": "Which products are in the Electronics category?",
+        "gold_sql": "SELECT product_name, unit_price FROM products WHERE category = 'Electronics' ORDER BY product_name;",
+        "gold_answer": "electronics_products"
+    },
+    {
+        "question": "Show top 5 customers by total spend.",
+        "gold_sql": "SELECT c.name, SUM(p.amount) as total_spent FROM customers c JOIN orders o ON c.customer_id = o.customer_id JOIN payments p ON o.order_id = p.order_id WHERE p.status = 'Success' GROUP BY c.name ORDER BY total_spent DESC LIMIT 5;",
+        "gold_answer": "top_customers"
+    },
+    {
+        "question": "What is the total quantity sold per product?",
+        "gold_sql": "SELECT p.product_name, SUM(oi.quantity) as total_qty FROM products p JOIN order_items oi ON p.product_id = oi.product_id GROUP BY p.product_name ORDER BY total_qty DESC;",
+        "gold_answer": "qty_per_product"
+    },
+    {
+        "question": "How many orders were placed this year?",
+        "gold_sql": "SELECT COUNT(*) FROM orders WHERE EXTRACT(year FROM order_date) = EXTRACT(year FROM CURRENT_DATE);",
+        "gold_answer": "orders_this_year"
+    },
+    {
+        "question": "List customers with their total number of orders.",
+        "gold_sql": "SELECT c.name, COUNT(o.order_id) as order_count FROM customers c LEFT JOIN orders o ON c.customer_id = o.customer_id GROUP BY c.name ORDER BY order_count DESC;",
+        "gold_answer": "customer_order_counts"
     }
 ]
 
@@ -62,7 +122,6 @@ class BenchmarkService:
             actual_answer = None
             err_msg = None
 
-            # Get expected gold results
             try:
                 gold_cols, gold_rows, _ = await self.chat_service.execute_query(q.gold_sql)
                 expected_answer = str(gold_rows[:2])
@@ -70,15 +129,19 @@ class BenchmarkService:
                 expected_answer = f"Gold execution failed: {str(e)}"
 
             if gen_sql and not is_ambiguous:
-                # Compare execution results to verify query correctness
                 try:
                     gen_cols, gen_rows, _ = await self.chat_service.execute_query(gen_sql)
                     actual_answer = str(gen_rows[:2])
-                    
-                    # Semantical comparison (ensure outputs match gold dataset shape/data)
+
                     if gen_rows and gold_rows:
-                        # Simple value comparison or key check
-                        passed = True
+                        same_row_count = len(gen_rows) == len(gold_rows)
+                        same_col_set = set(gen_cols) == set(gold_cols) if gold_cols else True
+                        if len(gold_rows) == 1 and len(gold_cols) == 1:
+                            gold_val = list(gold_rows[0].values())[0]
+                            gen_val = list(gen_rows[0].values())[0] if gen_rows else None
+                            passed = str(gold_val) == str(gen_val)
+                        else:
+                            passed = same_row_count and same_col_set
                     elif not gen_rows and not gold_rows:
                         passed = True
                 except Exception as db_err:
@@ -88,7 +151,6 @@ class BenchmarkService:
                 err_msg = clarification or "Query marked ambiguous or empty compilation"
                 actual_answer = err_msg
 
-            # Save results log entries
             res_obj = await self.repo.create_result(
                 benchmark_id=q.benchmark_id,
                 generated_sql=gen_sql,
@@ -104,7 +166,6 @@ class BenchmarkService:
                 passed_count += 1
             total_time += compile_time
             
-            # Map database model to Pydantic schema
             results_list.append(BenchmarkResultResponse(
                 result_id=res_obj.result_id,
                 benchmark_id=res_obj.benchmark_id,
@@ -122,7 +183,7 @@ class BenchmarkService:
         failed_count = total_tests - passed_count
         pass_rate = (passed_count / total_tests * 100) if total_tests > 0 else 0.0
         avg_time = (total_time / total_tests) if total_tests > 0 else 0.0
-        sql_accuracy = pass_rate  # Proxy metric based on test matches
+        sql_accuracy = pass_rate
 
         summary = BenchmarkSummary(
             total_tests=total_tests,

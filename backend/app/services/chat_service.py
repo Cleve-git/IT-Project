@@ -36,7 +36,6 @@ class ChatService:
     async def execute_query(self, sql: str) -> Tuple[List[str], List[Dict[str, Any]], int]:
         """Executes SQL query and returns (columns, rows, duration_ms)"""
         start = time.time()
-        # Append safe limits
         if "LIMIT" not in sql.upper():
             sql = f"SELECT * FROM ({sql}) AS subq LIMIT 100"
             
@@ -60,7 +59,6 @@ class ChatService:
         return columns, rows, duration
 
     async def generate_explanation(self, query: str, sql: str, rows: List[dict]) -> str:
-        """Generates conversational plain text explanation of table datasets."""
         if self.groq.is_mock:
             return f"Based on the query, here are the results for: '{query}'."
 
@@ -97,46 +95,93 @@ Write a clean, professional, action-oriented business summary under 4 sentences.
         # Save User Message to database
         await self.conv_repo.add_message(conversation_id=conversation_id, role="user", content=query_text)
 
-        # 2. Check Conversation Context for pending clarification reply
-        ctx = await self.context_service.get_or_create_context(conversation_id)
-        if ctx.pending_intent:
-            # We are in clarification recovery!
-            success, resolved_data = self.clarification_service.resolve_missing_field(ctx.pending_intent, query_text)
-            if success:
-                # Merge parameters
-                collected = dict(ctx.collected_data or {})
-                collected.update(resolved_data)
-                
-                # Formulate combined query prompt based on collected parameters
-                intent_name = ctx.pending_intent
-                combined_prompt = f"Perform analytical query for {intent_name} with parameters: {json.dumps(collected)}"
-                
-                # Reset/Clear Context
-                await self.context_service.clear_context(conversation_id)
-                
-                # Fall through to standard SQL compile using the combined parameter prompt
-                query_text = combined_prompt
-            else:
-                # Clarify again
-                msg = f"I didn't quite get that. Please clarify using the choices provided."
-                # Save assistant message
+        # 2. If the last assistant message was a clarification question, bypass intent detection
+        #    and go straight to SQL generation with the conversation history as context.
+        if conv.awaiting_clarification:
+            chat_history = []
+            messages_list = await self.conv_repo.get_messages(conversation_id)
+            for m in messages_list[-8:]:
+                chat_history.append({"role": m.sender, "content": m.content})
+
+            is_amb_llm, clar_llm, sql, reasoning = await self.sql_service.generate_sql(query_text, chat_history)
+
+            if is_amb_llm and clar_llm:
                 db_msg = await self.conv_repo.add_message(
                     conversation_id=conversation_id,
                     role="assistant",
-                    content=msg
+                    content=clar_llm
                 )
                 return {
                     "type": "clarification",
-                    "message": msg,
-                    "missing_fields": ctx.missing_fields,
+                    "message": clar_llm,
+                    "missing_fields": ["clarification"],
                     "db_message": db_msg
                 }
+
+            if sql:
+                conv.awaiting_clarification = False
+                await self.db.commit()
+            else:
+                err = "I was unable to compile a SQL query for your response. Could you rephrase?"
+                db_msg = await self.conv_repo.add_message(
+                    conversation_id=conversation_id,
+                    role="assistant",
+                    content=err
+                )
+                return {"type": "conversation", "message": err, "db_message": db_msg}
+
+            exec_status = "success"
+            err_msg = None
+            columns, rows, duration = [], [], 0
+            try:
+                columns, rows, duration = await self.execute_query(sql)
+            except Exception as db_err:
+                exec_status = "failed"
+                err_msg = str(db_err)
+
+            if exec_status == "failed":
+                content = f"An error occurred while running the compiled SQL query: {err_msg}"
+                db_msg = await self.conv_repo.add_message(
+                    conversation_id=conversation_id,
+                    role="assistant",
+                    content=content,
+                    generated_sql=sql
+                )
+                return {"type": "conversation", "message": content, "db_message": db_msg}
+
+            explanation = await self.formatter.generate_natural_response(query_text, columns, rows)
+            viz_config = self.viz_service.generate_plotly_config(columns, rows)
+            sql_payload = {"columns": columns, "rows": rows}
+            db_msg = await self.conv_repo.add_message(
+                conversation_id=conversation_id,
+                role="assistant",
+                content=explanation,
+                generated_sql=sql,
+                sql_results=sql_payload,
+                visualization_config=viz_config,
+                explanation=explanation
+            )
+            await self.query_repo.log_query(
+                user_id=user_id,
+                question=query_text,
+                generated_sql=sql,
+                execution_time_ms=duration,
+                rows_returned=len(rows),
+                status="success"
+            )
+            return {
+                "type": "query_result",
+                "question": query_text,
+                "sql": sql,
+                "data": rows,
+                "chart": viz_config,
+                "db_message": db_msg
+            }
 
         # 3. Standard Intent Detection
         intent = await self.intent_service.detect_intent(query_text)
 
         if intent != "DATA_QUERY":
-            # Direct conversational text responses
             if intent == "GREETING":
                 content = (
                     "Hello! 👋\n\n"
@@ -190,20 +235,22 @@ Write a clean, professional, action-oriented business summary under 4 sentences.
         # 4. DATA_QUERY Intent: check ambiguity
         is_ambiguous, pending_intent, missing_fields, clarifying_question = self.clarification_service.check_ambiguity(query_text)
         if is_ambiguous:
-            # Store context
             await self.context_service.update_context(
                 conversation_id=conversation_id,
                 pending_intent=pending_intent,
                 missing_fields=missing_fields,
                 collected_data={}
             )
-            
+
+            conv.awaiting_clarification = True
+            await self.db.commit()
+
             db_msg = await self.conv_repo.add_message(
                 conversation_id=conversation_id,
                 role="assistant",
                 content=clarifying_question
             )
-            
+
             await self.query_repo.log_query(
                 user_id=user_id,
                 question=query_text,
@@ -235,6 +282,8 @@ Write a clean, professional, action-oriented business summary under 4 sentences.
                 missing_fields=["clarification"],
                 collected_data={"original_query": query_text}
             )
+            conv.awaiting_clarification = True
+            await self.db.commit()
             db_msg = await self.conv_repo.add_message(
                 conversation_id=conversation_id,
                 role="assistant",
@@ -304,9 +353,12 @@ Write a clean, professional, action-oriented business summary under 4 sentences.
             }
 
         # Success flow: explanations & viz
+        conv.awaiting_clarification = False
+        await self.db.commit()
+
         explanation = await self.formatter.generate_natural_response(query_text, columns, rows)
         viz_config = self.viz_service.generate_plotly_config(columns, rows)
-        
+
         sql_payload = {"columns": columns, "rows": rows}
         db_msg = await self.conv_repo.add_message(
             conversation_id=conversation_id,

@@ -22,12 +22,26 @@ export const ChatWindow: React.FC = () => {
   } = useChatStore();
 
   const [input, setInput] = useState('');
+  const [loadingHistory, setLoadingHistory] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
+
+  // Load message history whenever the active conversation changes
+  useEffect(() => {
+    if (!currentConversationId) {
+      setMessages([]);
+      return;
+    }
+    setLoadingHistory(true);
+    api.getMessages(currentConversationId)
+      .then((msgs) => setMessages(msgs))
+      .catch(() => setMessages([]))
+      .finally(() => setLoadingHistory(false));
+  }, [currentConversationId]);
 
   // Handle Submitting Query
   const handleSubmit = async (text: string) => {
@@ -50,13 +64,15 @@ export const ChatWindow: React.FC = () => {
 
     try {
       const response = await api.submitQuery(text, currentConversationId || undefined);
-      
+
+      // Always add the assistant response regardless of whether this is a new conversation
+      addMessage(response);
+
+      // If this was a new conversation, update the conversation id and sidebar list
       if (!currentConversationId && response.conversation_id) {
         setCurrentConversationId(response.conversation_id);
         const list = await api.listConversations();
         setConversations(list);
-      } else {
-        addMessage(response);
       }
     } catch (err: any) {
       addMessage({
@@ -85,7 +101,14 @@ export const ChatWindow: React.FC = () => {
         
         {/* Messages Stream scroll container */}
         <div className="flex-1 overflow-y-auto p-6 scrollbar-thin">
-          {messages.length === 0 ? (
+          {loadingHistory ? (
+            <div className="h-full flex items-center justify-center">
+              <div className="flex items-center space-x-2 text-muted-foreground">
+                <Loader2 className="h-5 w-5 animate-spin" />
+                <span className="text-sm">Loading conversation...</span>
+              </div>
+            </div>
+          ) : messages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center max-w-xl mx-auto text-center space-y-6">
               <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center">
                 <Terminal className="h-6 w-6 text-primary" />
@@ -98,7 +121,6 @@ export const ChatWindow: React.FC = () => {
                 </p>
               </div>
 
-              {/* Suggested Prompt Buttons */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full pt-4">
                 {SUGGESTED_PROMPTS.map((prompt) => (
                   <button

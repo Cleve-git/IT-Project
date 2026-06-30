@@ -27,4 +27,4 @@ class Settings(BaseSettings):
         env_file_encoding = "utf-8"
         extra = "ignore"
 
-settings = Settings(_env_file="c:\\Code\\IT-project\\backend\\.env")
+settings = Settings()
