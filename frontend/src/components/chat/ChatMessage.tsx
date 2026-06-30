@@ -13,6 +13,21 @@ interface ChatMessageProps {
   message: Message;
 }
 
+// Lightweight, XSS-safe inline markdown for the explanation text: renders
+// **bold** and *italic* (the model emits these) instead of showing raw asterisks.
+function renderInlineMarkdown(text: string): React.ReactNode[] {
+  const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g);
+  return parts.map((part, i) => {
+    if (/^\*\*[^*]+\*\*$/.test(part)) {
+      return <strong key={i} className="font-semibold">{part.slice(2, -2)}</strong>;
+    }
+    if (/^\*[^*]+\*$/.test(part)) {
+      return <em key={i}>{part.slice(1, -1)}</em>;
+    }
+    return <React.Fragment key={i}>{part}</React.Fragment>;
+  });
+}
+
 export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
   const isUser = message.role === 'user';
   const [copied, setCopied] = useState(false);
@@ -70,7 +85,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
         <div className="flex-1 bg-card border border-border rounded-2xl rounded-tl-sm p-5 shadow-sm">
           {/* Explanation Text */}
           <div className="prose max-w-none text-sm text-foreground leading-relaxed font-normal whitespace-pre-wrap">
-            {message.message || message.content}
+            {renderInlineMarkdown(message.message || message.content || '')}
           </div>
 
           {/* Conditional SQL / Grid Tabs */}

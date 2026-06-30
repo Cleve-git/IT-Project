@@ -310,7 +310,9 @@ Write a clean, professional, action-oriented business summary under 4 sentences.
 
     def generate_plotly_config(self, columns: List[str], rows: List[dict]) -> Optional[dict]:
         """Recommends a chart layout for Plotly.js in the frontend based on output columns."""
-        if not rows or len(columns) < 2:
+        # A chart needs at least two data points to be meaningful; a single-row
+        # answer (e.g. a total or a single "top" result) is better left as text + grid.
+        if not rows or len(rows) < 2 or len(columns) < 2:
             return None
 
         # Look for quantitative vs qualitative columns
