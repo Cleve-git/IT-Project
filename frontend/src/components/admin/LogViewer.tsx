@@ -142,7 +142,7 @@ export const LogViewer: React.FC = () => {
                                   <Terminal className="h-3 w-3" />
                                   <span>Compiled SQL Statement</span>
                                 </span>
-                                <pre className="p-3 bg-[#0f172a] rounded-lg text-xs font-mono text-blue-300 border border-border overflow-x-auto leading-normal">
+                                <pre className="p-3 bg-background rounded-lg text-xs font-mono text-foreground border border-border overflow-x-auto leading-normal">
                                   <code>{log.executed_sql}</code>
                                 </pre>
                               </div>

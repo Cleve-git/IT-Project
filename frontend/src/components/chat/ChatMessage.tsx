@@ -136,14 +136,14 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
                 {/* SQL Query Content */}
                 <TabsContent value="sql" className="pt-3">
                   <div className="relative">
-                    <pre className="bg-[#0f172a] p-4 rounded-lg overflow-x-auto text-[11px] text-blue-300 font-mono border border-border leading-normal max-h-72">
+                    <pre className="bg-background p-4 rounded-lg overflow-x-auto text-[11px] text-foreground font-mono border border-border leading-normal max-h-72">
                       <code>{sqlContent}</code>
                     </pre>
                     <Button
-                      variant="ghost"
+                      variant="outline"
                       size="sm"
                       onClick={copyToClipboard}
-                      className="absolute top-2 right-2 h-7 w-7 p-0 bg-[#0f172a]/80 border border-slate-800 hover:bg-slate-800 text-slate-400 hover:text-white"
+                      className="absolute top-2 right-2 h-7 w-7 p-0 bg-background/80 border border-border hover:bg-muted text-muted-foreground hover:text-foreground"
                       title="Copy SQL to Clipboard"
                     >
                       {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
