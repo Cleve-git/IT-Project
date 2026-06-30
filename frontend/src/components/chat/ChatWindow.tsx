@@ -12,7 +12,7 @@ const SUGGESTED_PROMPTS = [
   "Show total revenue by customer",
   "What is our best selling product?",
   "Calculate profit for all products",
-  "Which customers are top tier in NY?"
+  "List Gold tier customers in Jakarta"
 ];
 
 export const ChatWindow: React.FC = () => {
@@ -28,6 +28,22 @@ export const ChatWindow: React.FC = () => {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
+
+  // Load a conversation's message history whenever one is selected (or after a
+  // new chat is created). Selecting "New Chat" sets the id to null -> stays empty.
+  useEffect(() => {
+    if (!currentConversationId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const history = await api.getMessages(currentConversationId);
+        if (!cancelled) setMessages(history);
+      } catch (err) {
+        console.error('Failed to load conversation messages', err);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [currentConversationId, setMessages]);
 
   // Handle Submitting Query
   const handleSubmit = async (text: string) => {
