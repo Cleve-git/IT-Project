@@ -4,6 +4,21 @@ A production-ready monorepo web application that translates natural language que
 
 ---
 
+## Project 3 Deliverables — Where to Find Each
+
+This project implements **Project 3: Conversational Data Analyst** end to end. Mapping of each required deliverable to its implementation:
+
+| # | Deliverable | Implementation |
+|---|---|---|
+| 1 | Schema-aware, **read-only** NL→SQL agent | `backend/app/application/services/analyst_service.py` (`generate_sql`, `check_sql_safety` — blocks all write/DDL) |
+| 2 | Execute → answer + **auto chart** + **explanation** | `analyst_service.py` (`execute_sql`, `generate_plotly_config`, `generate_explanation`); rendered by `frontend/.../chat/QueryVisualizer.tsx` |
+| 3 | **Clarifying questions + multi-turn** follow-ups | `chat.py` + `infrastructure/repositories/context_repository.py` + `ConversationContext` model (persists the pending clarification, merges the user's next answer) |
+| 4 | Query log + **"show the SQL"** transparency | `query_logs` table, `LogViewer.tsx`, and the SQL tab in `QueryVisualizer.tsx` |
+| 5 | **Execution-accuracy** evaluation (50+ benchmark questions) | `backend/app/application/benchmarks/benchmark_suite.py` (52 gold Qs) + `POST /api/v1/admin/benchmarks/run`; Admin → Benchmarking tab. See *Evaluation* below. |
+| 6 | **Business case** for self-service analytics | `docs/business_case.md` |
+
+---
+
 ## Technical Stack
 
 - **Frontend**: Next.js 15 (App Router), TypeScript, Tailwind CSS v4, shadcn/ui components, Zustand, TanStack Query, Plotly.js.

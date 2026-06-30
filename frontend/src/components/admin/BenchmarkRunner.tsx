@@ -11,12 +11,14 @@ export const BenchmarkRunner: React.FC = () => {
   const [results, setResults] = useState<BenchmarkResult[]>([]);
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Quick run (10) keeps live demos under the LLM rate limit; Full runs all 52.
+  const [sample, setSample] = useState<number>(10);
 
   const runBenchmark = async () => {
     setRunning(true);
     setError(null);
     try {
-      const data = await api.runBenchmarks();
+      const data = await api.runBenchmarks(sample ? { sample } : undefined);
       setResults(data);
     } catch (err: any) {
       setError(err.message || "Failed to execute benchmark run");
@@ -51,8 +53,20 @@ export const BenchmarkRunner: React.FC = () => {
           <h3 className="text-base font-bold text-foreground">Execution Accuracy Benchmark</h3>
           <p className="text-xs text-muted-foreground font-medium">Runs the agent against a 50+ question golden dataset and compares each generated query's result set against the gold answer.</p>
         </div>
-        <Button 
-          onClick={runBenchmark} 
+        <div className="flex items-center gap-2">
+        <select
+          value={sample}
+          onChange={(e) => setSample(Number(e.target.value))}
+          disabled={running}
+          className="bg-muted border border-border rounded-lg text-xs font-medium text-foreground px-2 py-2 cursor-pointer focus:outline-none focus:border-primary"
+          title="Quick keeps a live demo under the LLM rate limit; Full runs the entire suite."
+        >
+          <option value={10}>Quick (10 questions)</option>
+          <option value={25}>Standard (25 questions)</option>
+          <option value={0}>Full suite (52 questions)</option>
+        </select>
+        <Button
+          onClick={runBenchmark}
           disabled={running}
           className="flex items-center space-x-2 bg-primary hover:bg-primary/90 text-primary-foreground cursor-pointer px-4"
         >
@@ -68,6 +82,7 @@ export const BenchmarkRunner: React.FC = () => {
             </>
           )}
         </Button>
+        </div>
       </div>
 
       {error && (

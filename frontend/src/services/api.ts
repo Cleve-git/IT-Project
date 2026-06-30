@@ -130,8 +130,12 @@ class ApiService {
     });
   }
 
-  async runBenchmarks(): Promise<BenchmarkResult[]> {
-    return this.request<BenchmarkResult[]>('/api/v1/admin/benchmarks/run', {
+  async runBenchmarks(opts?: { sample?: number; category?: string }): Promise<BenchmarkResult[]> {
+    const params = new URLSearchParams();
+    if (opts?.sample) params.set('sample', String(opts.sample));
+    if (opts?.category) params.set('category', opts.category);
+    const qs = params.toString();
+    return this.request<BenchmarkResult[]>(`/api/v1/admin/benchmarks/run${qs ? `?${qs}` : ''}`, {
       method: 'POST',
     });
   }
