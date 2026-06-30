@@ -1,6 +1,11 @@
+import os
 from pydantic_settings import BaseSettings
 from pydantic import Field
 from typing import List
+
+# backend/.env resolved relative to this file (works on any machine / CWD).
+# Falls back to real OS env vars (e.g. Railway/Vercel) when the file is absent.
+_ENV_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), ".env")
 
 class Settings(BaseSettings):
     DATABASE_URL: str = Field(
@@ -27,4 +32,4 @@ class Settings(BaseSettings):
         env_file_encoding = "utf-8"
         extra = "ignore"
 
-settings = Settings(_env_file="c:\\Code\\IT-project\\backend\\.env")
+settings = Settings(_env_file=_ENV_PATH)

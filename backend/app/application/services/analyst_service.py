@@ -359,14 +359,19 @@ Write a clean, professional, action-oriented business summary under 4 sentences.
             return (False, None, sql, "Grouping order_items by product to identify best sellers by unit count.")
             
         elif "revenue" in qt or "sales" in qt:
-            sql = """
-            SELECT DATE_TRUNC('month', order_date) as month, SUM(order_total) as monthly_revenue
-            FROM orders
-            WHERE status = 'completed'
-            GROUP BY month
-            ORDER BY month ASC;
-            """
-            return (False, None, sql, "Summing order totals over time grouped by month.")
+            # Only break revenue down by month when the user explicitly asks for a trend.
+            if any(k in qt for k in ("month", "monthly", "trend", "over time", "by month")):
+                sql = """
+                SELECT DATE_TRUNC('month', order_date) as month, SUM(order_total) as monthly_revenue
+                FROM orders
+                WHERE status = 'completed'
+                GROUP BY month
+                ORDER BY month ASC;
+                """
+                return (False, None, sql, "Summing order totals over time grouped by month.")
+            # Default: a single total revenue figure from successful payments.
+            sql = "SELECT SUM(amount) AS total_revenue FROM payments WHERE status = 'paid';"
+            return (False, None, sql, "Summing all successful payment amounts for total revenue.")
             
         else:
             # Catch-all basic select
