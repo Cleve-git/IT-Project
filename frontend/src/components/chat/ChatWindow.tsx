@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Terminal, Loader2, ArrowRight, BookOpen } from 'lucide-react';
+import { Send, Terminal, Loader2, ArrowRight, BookOpen, Database } from 'lucide-react';
 import { useChatStore } from '../../store/useChatStore';
 import api from '../../services/api';
 import ChatMessage from './ChatMessage';
@@ -185,9 +185,17 @@ export const ChatWindow: React.FC = () => {
 
       </div>
 
-      {/* Right Sidebar: Schema Explorer */}
-      <div className="w-80 overflow-y-auto hidden xl:block sticky top-0 h-[calc(100vh-8rem)]">
-        <SchemaExplorer />
+      {/* Right: Schema Explorer — thin rail that overlays on hover (keeps focus on chat) */}
+      <div className="group hidden xl:block relative shrink-0">
+        {/* Collapsed trigger rail */}
+        <div className="flex flex-col items-center gap-2 px-2.5 py-3 rounded-xl border border-border bg-card shadow-sm sticky top-0 group-hover:opacity-0 transition-opacity">
+          <Database className="h-4 w-4 text-primary" />
+          <span className="text-[9px] [writing-mode:vertical-rl] rotate-180 tracking-widest uppercase text-muted-foreground">Schema</span>
+        </div>
+        {/* Expanded panel on hover (overlay, no layout shift) */}
+        <div className="absolute top-0 right-0 w-80 h-[calc(100vh-8rem)] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-150 z-20">
+          <SchemaExplorer />
+        </div>
       </div>
 
     </div>
