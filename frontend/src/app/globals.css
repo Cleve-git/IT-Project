@@ -6,7 +6,7 @@
   --foreground: #0F172A;
   --card: #FFFFFF;
   --card-foreground: #0F172A;
-  --primary: #2563EB;
+  --primary: #EA580C;
   --primary-foreground: #FFFFFF;
   --border: #E2E8F0;
   --text-secondary: #64748B;
@@ -37,14 +37,22 @@
   --foreground: #F8FAFC;
   --card: #0F172A;
   --card-foreground: #F8FAFC;
+  --primary: #2563EB;
   --border: #1E293B;
   --text-secondary: #94A3B8;
 }
 
 body {
-  background: var(--background);
+  /* Light: warm orange-tinted gradient. Dark: solid (overridden below). */
+  background: linear-gradient(160deg, #FFF1E6 0%, #F8FAFC 55%, #F1F5F9 100%);
+  background-attachment: fixed;
   color: var(--foreground);
   font-family: 'Inter', sans-serif;
+  min-height: 100vh;
+}
+
+.dark body {
+  background: #020617;
 }
 
 /* Custom scrollbars for premium UX */

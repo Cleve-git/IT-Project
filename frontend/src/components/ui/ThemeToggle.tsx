@@ -29,12 +29,16 @@ export const ThemeToggle: React.FC<{ className?: string }> = ({ className }) => 
     <button
       onClick={toggle}
       title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-      className={
+      className={`group transition-all duration-200 hover:scale-110 active:scale-90 ${
         className ??
-        'h-10 w-10 rounded-lg flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer'
-      }
+        'h-10 w-10 rounded-lg flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer'
+      }`}
     >
-      {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+      {isDark ? (
+        <Sun className="h-5 w-5 transition-transform duration-500 group-hover:rotate-90" />
+      ) : (
+        <Moon className="h-5 w-5 transition-transform duration-500 group-hover:-rotate-12" />
+      )}
     </button>
   );
 };

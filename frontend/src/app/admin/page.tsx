@@ -87,7 +87,7 @@ export default function AdminPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex">
+    <div className="min-h-screen text-foreground flex">
       
       {/* 1. Fixed Left Sidebar */}
       <aside className="w-64 h-screen fixed left-0 top-0 border-r border-border bg-card flex flex-col justify-between p-4 z-20">
@@ -169,7 +169,7 @@ export default function AdminPage() {
         </header>
 
         {/* 3. Main Scrollable Content Area */}
-        <main className="flex-1 p-6 overflow-y-auto bg-background">
+        <main className="flex-1 p-6 overflow-y-auto">
           <div className="max-w-6xl mx-auto bg-card border border-border/60 rounded-2xl p-6">
             {activeTab === 'analytics' && <AnalyticsCard />}
             {activeTab === 'users' && <UserManagementTable />}

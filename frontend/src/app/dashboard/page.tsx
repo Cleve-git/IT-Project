@@ -79,7 +79,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex">
+    <div className="min-h-screen text-foreground flex">
       
       {/* 1. Icon rail — click an icon to open its panel (VS Code style) */}
       <aside className="w-14 h-screen fixed left-0 top-0 border-r border-border bg-card flex flex-col items-center justify-between py-3 z-40">
@@ -92,7 +92,7 @@ export default function DashboardPage() {
           <button
             onClick={() => { handleNewChat(); setActivePanel(null); }}
             title="New chat"
-            className="h-10 w-10 rounded-lg flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer"
+            className="h-10 w-10 rounded-lg flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground transition-all duration-150 active:scale-90 cursor-pointer"
           >
             <Plus className="h-5 w-5" />
           </button>
@@ -100,7 +100,7 @@ export default function DashboardPage() {
           <button
             onClick={() => togglePanel('recent')}
             title="Recent chats"
-            className={`h-10 w-10 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${activePanel === 'recent' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}
+            className={`h-10 w-10 rounded-lg flex items-center justify-center transition-all duration-150 active:scale-90 cursor-pointer ${activePanel === 'recent' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}
           >
             <History className="h-5 w-5" />
           </button>
@@ -108,7 +108,7 @@ export default function DashboardPage() {
           <button
             onClick={() => togglePanel('schema')}
             title="Schema explorer"
-            className={`h-10 w-10 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${activePanel === 'schema' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}
+            className={`h-10 w-10 rounded-lg flex items-center justify-center transition-all duration-150 active:scale-90 cursor-pointer ${activePanel === 'schema' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}
           >
             <Database className="h-5 w-5" />
           </button>
@@ -126,7 +126,7 @@ export default function DashboardPage() {
           <button
             onClick={handleLogout}
             title="Sign out"
-            className="h-10 w-10 rounded-lg flex items-center justify-center text-muted-foreground hover:text-danger hover:bg-danger/5 transition-colors cursor-pointer"
+            className="h-10 w-10 rounded-lg flex items-center justify-center text-muted-foreground hover:text-danger hover:bg-danger/5 transition-all duration-150 active:scale-90 cursor-pointer"
           >
             <LogOut className="h-5 w-5" />
           </button>
@@ -207,7 +207,7 @@ export default function DashboardPage() {
         </header>
 
         {/* 3. Main Scrollable Content Area */}
-        <main className="flex-1 p-6 overflow-y-auto bg-background">
+        <main className="flex-1 p-6 overflow-y-auto">
           <div className="max-w-6xl mx-auto">
             <ChatWindow />
           </div>
