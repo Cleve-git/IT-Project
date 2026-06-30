@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import delete
 from typing import List, Optional
-from app.domain.models import Conversation, Message
+from app.domain.models import Conversation, Message, Feedback, ConversationContext
 
 class ConversationRepository:
     def __init__(self, db: AsyncSession):
@@ -26,8 +26,23 @@ class ConversationRepository:
         return list(result.scalars().all())
 
     async def delete(self, conversation_id: str) -> bool:
-        stmt = delete(Conversation).filter_by(conversation_id=conversation_id)
-        result = await self.db.execute(stmt)
+        """
+        Delete a conversation and all rows that reference it, in FK-safe order
+        (feedback -> messages -> context -> conversation). The ORM relationship
+        cascade does not fire for Core bulk deletes, so we remove children
+        explicitly to avoid a foreign-key violation.
+        """
+        msg_ids = (
+            await self.db.execute(
+                select(Message.message_id).filter_by(conversation_id=conversation_id)
+            )
+        ).scalars().all()
+
+        if msg_ids:
+            await self.db.execute(delete(Feedback).where(Feedback.message_id.in_(msg_ids)))
+        await self.db.execute(delete(Message).filter_by(conversation_id=conversation_id))
+        await self.db.execute(delete(ConversationContext).filter_by(conversation_id=conversation_id))
+        result = await self.db.execute(delete(Conversation).filter_by(conversation_id=conversation_id))
         await self.db.commit()
         return (result.rowcount or 0) > 0
 
