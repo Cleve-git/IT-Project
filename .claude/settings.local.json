@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\HP\\\\OneDrive\\\\Documents\\\\GitHub\\\\IT-Project\\\\frontend\\\\src\\\\types\" -Force | Sort-Object @{Expression={$_.PSIsContainer}; Descending=$true}, Name)",
+      "Bash(Get-ChildItem *)",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\HP\\\\OneDrive\\\\Documents\\\\GitHub\\\\IT-Project\\\\backend\" -Force | Sort-Object @{Expression={$_.PSIsContainer}; Descending=$true}, Name)"
+    ]
+  }
+}
