@@ -85,8 +85,8 @@ class ApiService {
     });
   }
 
-  async submitFeedback(messageId: string, rating: number, comment?: string): Promise<any> {
-    return this.request<any>('/api/v1/chat/feedback', {
+  async submitFeedback(messageId: string, rating: number, comment?: string): Promise<unknown> {
+    return this.request<unknown>('/api/v1/chat/feedback', {
       method: 'POST',
       body: JSON.stringify({ message_id: messageId, rating, comment }),
     });

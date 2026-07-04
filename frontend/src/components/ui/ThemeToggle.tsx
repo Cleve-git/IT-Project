@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Sun, Moon } from 'lucide-react';
 
 /**
@@ -8,11 +8,9 @@ import { Sun, Moon } from 'lucide-react';
  * The initial class is set by the inline script in layout.tsx (no flash).
  */
 export const ThemeToggle: React.FC<{ className?: string }> = ({ className }) => {
-  const [isDark, setIsDark] = useState(true);
-
-  useEffect(() => {
-    setIsDark(document.documentElement.classList.contains('dark'));
-  }, []);
+  const [isDark, setIsDark] = useState(
+    () => typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
+  );
 
   const toggle = () => {
     const next = !document.documentElement.classList.contains('dark');

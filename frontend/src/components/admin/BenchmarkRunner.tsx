@@ -20,8 +20,8 @@ export const BenchmarkRunner: React.FC = () => {
     try {
       const data = await api.runBenchmarks(sample ? { sample } : undefined);
       setResults(data);
-    } catch (err: any) {
-      setError(err.message || "Failed to execute benchmark run");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to execute benchmark run');
     } finally {
       setRunning(false);
     }
@@ -51,7 +51,7 @@ export const BenchmarkRunner: React.FC = () => {
       <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 border-b border-border pb-4">
         <div>
           <h3 className="text-base font-bold text-foreground">Execution Accuracy Benchmark</h3>
-          <p className="text-xs text-muted-foreground font-medium">Runs the agent against a 50+ question golden dataset and compares each generated query's result set against the gold answer.</p>
+          <p className="text-xs text-muted-foreground font-medium">Runs the agent against a 50+ question golden dataset and compares each generated query&apos;s result set against the gold answer.</p>
         </div>
         <div className="flex items-center gap-2">
         <select

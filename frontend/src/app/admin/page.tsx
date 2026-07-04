@@ -8,7 +8,7 @@ import {
   BarChart3, Users, FileSpreadsheet, History, Cpu, Database, Shield
 } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
-import { Card, CardHeader, CardTitle, CardDescription } from '../../components/ui/card';
+import { Card, CardTitle, CardDescription } from '../../components/ui/card';
 import ThemeToggle from '../../components/ui/ThemeToggle';
 import AnalyticsCard from '../../components/admin/AnalyticsCard';
 import UserManagementTable from '../../components/admin/UserManagementTable';

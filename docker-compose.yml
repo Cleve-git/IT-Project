@@ -30,6 +30,7 @@ services:
     volumes:
       - ./backend:/app
     environment:
+      - PYTHONPATH=/app
       - DATABASE_URL=postgresql+asyncpg://postgres:password@db:5432/conversational_analyst
       - DATABASE_SYNC_URL=postgresql://postgres:password@db:5432/conversational_analyst
       - GROQ_API_KEY=mock-groq-key

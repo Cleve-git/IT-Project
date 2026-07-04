@@ -34,8 +34,8 @@ export const ChatWindow: React.FC = () => {
   useEffect(() => {
     if (!currentConversationId) return;
     let cancelled = false;
-    setLoadingHistory(true);
     (async () => {
+      setLoadingHistory(true);
       try {
         const history = await api.getMessages(currentConversationId);
         if (!cancelled) setMessages(history);
@@ -55,7 +55,7 @@ export const ChatWindow: React.FC = () => {
     setLoading(true);
 
     const tempUserMsg = {
-      message_id: Math.random().toString(),
+      message_id: crypto.randomUUID(),
       conversation_id: currentConversationId || '',
       role: 'user' as const,
       content: text,
@@ -77,12 +77,12 @@ export const ChatWindow: React.FC = () => {
       } else {
         addMessage(response);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       addMessage({
-        message_id: Math.random().toString(),
+        message_id: crypto.randomUUID(),
         conversation_id: currentConversationId || '',
         role: 'assistant',
-        content: `Error: ${err.message || 'Something went wrong during SQL execution.'}`,
+        content: `Error: ${err instanceof Error ? err.message : 'Something went wrong during SQL execution.'}`,
         generated_sql: null,
         sql_results: null,
         visualization_config: null,

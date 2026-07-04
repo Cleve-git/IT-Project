@@ -29,7 +29,7 @@ export const DocumentIngestionView: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchDocuments();
+    (async () => { await fetchDocuments(); })();
   }, []);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -47,8 +47,8 @@ export const DocumentIngestionView: React.FC = () => {
     try {
       await api.uploadDocument(file);
       await fetchDocuments();
-    } catch (err: any) {
-      setError(err.message || "Failed to upload file");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to upload file');
     } finally {
       setUploading(false);
     }
@@ -63,8 +63,8 @@ export const DocumentIngestionView: React.FC = () => {
       } else {
         alert("No tables extracted from this document");
       }
-    } catch (err: any) {
-      alert(err.message || "Failed to load table content");
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Failed to load table content');
     } finally {
       setLoadingTable(false);
     }

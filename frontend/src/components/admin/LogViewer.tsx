@@ -26,7 +26,7 @@ export const LogViewer: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchLogs();
+    (async () => { await fetchLogs(); })();
   }, []);
 
   const toggleExpand = (logId: string) => {

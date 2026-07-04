@@ -26,8 +26,8 @@ export default function RegisterPage() {
         alert("Registration mock completed! Redirecting to login sandbox.");
         router.push('/login');
       }, 1000);
-    } catch (err: any) {
-      setError(err.message || "Something went wrong.");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
       setLoading(false);
     }
   };

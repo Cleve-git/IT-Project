@@ -10,8 +10,20 @@ const Plot = dynamic(() => import('react-plotly.js'), {
   loading: () => <div className="h-72 w-full flex items-center justify-center text-muted-foreground">Loading charts library...</div>
 });
 
+interface PlotTrace {
+  [key: string]: unknown;
+  marker?: Record<string, unknown>;
+  line?: Record<string, unknown>;
+}
+
 interface QueryVisualizerProps {
-  config: Record<string, any>;
+  config: {
+    data?: PlotTrace[];
+    layout?: Record<string, unknown> & {
+      xaxis?: Record<string, unknown>;
+      yaxis?: Record<string, unknown>;
+    };
+  };
 }
 
 interface ChartTheme {
@@ -44,7 +56,7 @@ export const QueryVisualizer: React.FC<QueryVisualizerProps> = ({ config }) => {
   if (!config) return null;
 
   // Recolor each series to the active theme's primary colour
-  const data = (config.data || []).map((trace: Record<string, any>) => ({
+  const data = (config.data || []).map((trace: PlotTrace) => ({
     ...trace,
     marker: { ...(trace.marker || {}), color: theme.primary },
     line: { ...(trace.line || {}), color: theme.primary },

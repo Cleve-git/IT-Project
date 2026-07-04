@@ -17,15 +17,15 @@ export const UserManagementTable: React.FC = () => {
     try {
       const data = await api.listUsers();
       setUsers(data);
-    } catch (err: any) {
-      setError(err.message || "Failed to load users");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to load users');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchUsers();
+    (async () => { await fetchUsers(); })();
   }, []);
 
   const handleToggleRole = async (userId: string, currentRole: 'admin' | 'user') => {
@@ -35,8 +35,8 @@ export const UserManagementTable: React.FC = () => {
     try {
       await api.updateUserRole(userId, nextRole);
       setUsers(users.map(u => u.id === userId ? { ...u, role: nextRole } : u));
-    } catch (err: any) {
-      alert(err.message || "Failed to update role");
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Failed to update role');
     }
   };
 

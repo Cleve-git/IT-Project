@@ -45,8 +45,8 @@ export default function LoginPage() {
 
       setSession(profile, mockToken);
       router.push('/dashboard');
-    } catch (err: any) {
-      setError(err.message || "Failed to establish database session. Ensure FastAPI backend is running on port 8000.");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to establish database session. Ensure FastAPI backend is running on port 8000.");
     } finally {
       setLoading(false);
     }

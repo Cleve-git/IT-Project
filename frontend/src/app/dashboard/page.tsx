@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   Sparkles, LogOut, MessageSquare, ShieldCheck,
-  Database, Plus, Trash2, Shield, History, X
+  Database, Plus, Trash2, History, X
 } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useChatStore } from '../../store/useChatStore';
@@ -19,7 +19,7 @@ export default function DashboardPage() {
   const { user, isAuthenticated, clearSession } = useAuthStore();
   const {
     conversations, currentConversationId,
-    setConversations, setCurrentConversationId, setMessages, setLoading
+    setConversations, setCurrentConversationId, setMessages
   } = useChatStore();
   const [activePanel, setActivePanel] = useState<'recent' | 'schema' | null>(null);
   const togglePanel = (p: 'recent' | 'schema') => setActivePanel((prev) => (prev === p ? null : p));

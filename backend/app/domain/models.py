@@ -147,13 +147,18 @@ class ConversationContext(Base):
     """
     Tracks an outstanding clarification for a conversation so a follow-up answer
     can be merged with the original question (multi-turn disambiguation).
-    Matches the pre-existing `conversation_context` table (uuid / jsonb columns).
+    Matches the pre-existing `conversation_context` table.
+    NOTE: conversation_id / context_id are stored as VARCHAR in the actual
+    database (not UUID), consistent with Conversation.conversation_id above.
+    Using SQLAlchemy's UUID type here caused a type mismatch at query time
+    ("operator does not exist: character varying = uuid"), so both id columns
+    are declared as String to match the real column types.
     One pending row per conversation at a time.
     """
     __tablename__ = "conversation_context"
 
-    context_id = Column(UUID(as_uuid=False), primary_key=True, default=lambda: str(uuid.uuid4()))
-    conversation_id = Column(UUID(as_uuid=False), nullable=False, index=True)
+    context_id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    conversation_id = Column(String, nullable=False, index=True)
     pending_intent = Column(String, nullable=True)   # the original natural-language question
     missing_fields = Column(JSONB, nullable=True)    # {"clarification": "..."} we asked the user
     collected_data = Column(JSONB, nullable=True)     # reserved for future slot-filling

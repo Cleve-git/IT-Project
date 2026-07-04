@@ -22,9 +22,9 @@ export interface Message {
   generated_sql: string | null;
   sql_results: {
     columns: string[];
-    rows: Record<string, any>[];
+    rows: Record<string, unknown>[];
   } | null;
-  visualization_config: Record<string, any> | null;
+  visualization_config: Record<string, unknown> | null;
   explanation: string | null;
   created_at: string;
   
@@ -32,8 +32,8 @@ export interface Message {
   type?: 'conversation' | 'query_result';
   message?: string | null;
   sql?: string | null;
-  results?: Record<string, any>[] | null;
-  visualization?: Record<string, any> | null;
+  results?: Record<string, unknown>[] | null;
+  visualization?: Record<string, unknown> | null;
 }
 
 export interface QueryLog {
@@ -62,7 +62,7 @@ export interface ExtractedTable {
   document_id: string;
   table_name: string;
   headers: string[];
-  rows: Record<string, any>[];
+  rows: Record<string, unknown>[];
   created_at: string;
 }
 
