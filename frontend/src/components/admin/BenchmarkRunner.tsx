@@ -11,14 +11,12 @@ export const BenchmarkRunner: React.FC = () => {
   const [results, setResults] = useState<BenchmarkResult[]>([]);
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // Quick run (10) keeps live demos under the LLM rate limit; Full runs all 52.
-  const [sample, setSample] = useState<number>(10);
 
   const runBenchmark = async () => {
     setRunning(true);
     setError(null);
     try {
-      const data = await api.runBenchmarks(sample ? { sample } : undefined);
+      const data = await api.runBenchmarks();
       setResults(data);
     } catch (err: any) {
       setError(err.message || "Failed to execute benchmark run");
@@ -35,16 +33,6 @@ export const BenchmarkRunner: React.FC = () => {
     : 0;
   const isHealthy = accuracy >= 80;
 
-  const categoryBreakdown = Object.values(
-    results.reduce((acc, r) => {
-      const key = r.category || 'uncategorized';
-      if (!acc[key]) acc[key] = { category: key, total: 0, correct: 0 };
-      acc[key].total += 1;
-      if (r.is_correct) acc[key].correct += 1;
-      return acc;
-    }, {} as Record<string, { category: string; total: number; correct: number }>)
-  ).sort((a, b) => a.category.localeCompare(b.category));
-
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 border-b border-border pb-4">
@@ -53,17 +41,6 @@ export const BenchmarkRunner: React.FC = () => {
           <p className="text-xs text-muted-foreground font-medium">Runs the agent against a 50+ question golden dataset and compares each generated query's result set against the gold answer.</p>
         </div>
         <div className="flex items-center gap-2">
-          <select
-            value={sample}
-            onChange={(e) => setSample(Number(e.target.value))}
-            disabled={running}
-            className="bg-muted border border-border rounded-md text-xs font-medium text-foreground px-2 py-2 cursor-pointer focus:outline-none focus:border-gray-400"
-            title="Quick keeps a live demo under the LLM rate limit; Full runs the entire suite."
-          >
-            <option value={10}>Quick (10 questions)</option>
-            <option value={25}>Standard (25 questions)</option>
-            <option value={0}>Full suite (52 questions)</option>
-          </select>
           <Button
             onClick={runBenchmark}
             disabled={running}
@@ -125,35 +102,12 @@ export const BenchmarkRunner: React.FC = () => {
         </div>
       )}
 
-      {/* Per-category accuracy breakdown */}
-      {categoryBreakdown.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {categoryBreakdown.map((c) => {
-            const pct = Math.round((c.correct / c.total) * 100);
-            return (
-              <div
-                key={c.category}
-                className="bg-muted/40 border border-border rounded-md px-3 py-1.5 text-xs"
-                title={`${c.correct} of ${c.total} correct`}
-              >
-                <span className="font-semibold text-foreground capitalize">{c.category}</span>
-                <span className="ml-2 font-bold text-muted-foreground">
-                  {pct}%
-                </span>
-                <span className="ml-1 text-muted-foreground">({c.correct}/{c.total})</span>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
       {/* Results grid */}
       {results.length > 0 && (
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead className="text-xs font-semibold text-muted-foreground">Natural Language Test Case</TableHead>
-              <TableHead className="text-xs font-semibold text-muted-foreground">Category</TableHead>
               <TableHead className="text-xs font-semibold text-muted-foreground">Speed (ms)</TableHead>
               <TableHead className="text-xs font-semibold text-muted-foreground">Result Match</TableHead>
               <TableHead className="text-xs font-semibold text-muted-foreground">Details</TableHead>
@@ -164,9 +118,6 @@ export const BenchmarkRunner: React.FC = () => {
               <TableRow key={r.benchmark_id || idx} className="border-border/60">
                 <TableCell className="py-3 text-xs font-semibold text-foreground">
                   {r.nl_query}
-                </TableCell>
-                <TableCell className="py-3 text-xs text-muted-foreground capitalize">
-                  {r.category || '—'}
                 </TableCell>
                 <TableCell className="py-3 text-xs font-mono text-muted-foreground">
                   {r.execution_time_ms}ms
