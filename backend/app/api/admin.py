@@ -1,6 +1,7 @@
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List
+from typing import List, Optional
 from app.core.database import get_db
 from app.core.security import require_admin
 from app.schemas.chat import SystemStatsResponse, QueryLogResponse, ProfileResponse, UpdateRoleRequest
@@ -13,10 +14,20 @@ router = APIRouter(prefix="/admin", tags=["Admin Operations"], dependencies=[Dep
 # --- Finalized Specification Endpoints ---
 
 @router.get("/query-logs", response_model=List[QueryLogResponse])
-async def get_query_logs_final(limit: int = 100, db: AsyncSession = Depends(get_db)):
+async def get_query_logs_final(
+    limit: int = 100,
+    offset: int = 0,
+    user: Optional[str] = None,
+    status: Optional[str] = None,
+    date_from: Optional[datetime] = None,
+    date_to: Optional[datetime] = None,
+    db: AsyncSession = Depends(get_db),
+):
     """Retrieve audit log history of all compiled SQL statements across the platform."""
     repo = QueryRepository(db)
-    return await repo.get_all_logs(limit=limit)
+    return await repo.get_all_logs(
+        limit=limit, offset=offset, user=user, status=status, date_from=date_from, date_to=date_to
+    )
 
 
 @router.get("/analytics", response_model=SystemStatsResponse)
@@ -37,10 +48,20 @@ async def get_system_stats_compat(db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/logs", response_model=List[QueryLogResponse])
-async def get_query_logs_compat(limit: int = 100, db: AsyncSession = Depends(get_db)):
+async def get_query_logs_compat(
+    limit: int = 100,
+    offset: int = 0,
+    user: Optional[str] = None,
+    status: Optional[str] = None,
+    date_from: Optional[datetime] = None,
+    date_to: Optional[datetime] = None,
+    db: AsyncSession = Depends(get_db),
+):
     """Retrieve audit query log history alias for frontend."""
     repo = QueryRepository(db)
-    return await repo.get_all_logs(limit=limit)
+    return await repo.get_all_logs(
+        limit=limit, offset=offset, user=user, status=status, date_from=date_from, date_to=date_to
+    )
 
 
 @router.get("/users", response_model=List[ProfileResponse])

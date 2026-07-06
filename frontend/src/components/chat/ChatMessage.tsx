@@ -60,7 +60,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
   if (isUser) {
     return (
       <div className="flex justify-end mb-6">
-        <div className="flex items-start space-x-3 max-w-[80%]">
+        <div className="flex items-start space-x-3 w-full max-w-[80%]">
           <div className="bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 rounded-md px-4 py-3 active:scale-[0.98] transition-all">
             <p className="text-sm font-medium leading-relaxed">{message.content}</p>
             <div className="text-[10px] text-white/60 dark:text-gray-900/60 mt-1.5 flex justify-end font-mono">
@@ -78,7 +78,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
   // Assistant response
   return (
     <div className="flex justify-start mb-6">
-      <div className="flex items-start space-x-3 max-w-[90%]">
+      <div className="flex items-start space-x-3 w-full max-w-[90%]">
         <div className="h-8 w-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
           <Database className="h-4 w-4 text-gray-600 dark:text-gray-300" />
         </div>

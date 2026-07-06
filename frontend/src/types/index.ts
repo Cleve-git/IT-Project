@@ -39,12 +39,22 @@ export interface Message {
 export interface QueryLog {
   log_id: string;
   user_id: string;
-  query_text: string;
-  executed_sql: string | null;
-  execution_duration_ms: number | null;
+  user_email: string | null;
+  user_full_name: string | null;
+  question: string;
+  generated_sql: string | null;
+  execution_time_ms: number | null;
+  rows_returned: number | null;
   status: 'success' | 'failed';
   error_message: string | null;
   created_at: string;
+}
+
+export interface LogFilters {
+  user?: string;
+  status?: 'success' | 'failed';
+  dateFrom?: string;
+  dateTo?: string;
 }
 
 export interface UploadedDocument {

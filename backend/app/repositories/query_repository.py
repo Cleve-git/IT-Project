@@ -1,6 +1,8 @@
+from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import func
+from sqlalchemy import func, or_
+from sqlalchemy.orm import selectinload
 from typing import List, Optional, Dict, Any
 from app.models.query_logs import QueryLog
 from app.models.profiles import Profile
@@ -41,8 +43,27 @@ class QueryRepository:
         result = await self.db.execute(stmt)
         return list(result.scalars().all())
 
-    async def get_all_logs(self, limit: int = 100) -> List[QueryLog]:
-        stmt = select(QueryLog).order_by(QueryLog.created_at.desc()).limit(limit)
+    async def get_all_logs(
+        self,
+        limit: int = 100,
+        offset: int = 0,
+        user: Optional[str] = None,
+        status: Optional[str] = None,
+        date_from: Optional[datetime] = None,
+        date_to: Optional[datetime] = None,
+    ) -> List[QueryLog]:
+        stmt = select(QueryLog).options(selectinload(QueryLog.user))
+        if user:
+            stmt = stmt.join(Profile, QueryLog.user_id == Profile.id).filter(
+                or_(Profile.email.ilike(f"%{user}%"), Profile.full_name.ilike(f"%{user}%"))
+            )
+        if status:
+            stmt = stmt.filter(QueryLog.status == status)
+        if date_from:
+            stmt = stmt.filter(QueryLog.created_at >= date_from)
+        if date_to:
+            stmt = stmt.filter(QueryLog.created_at <= date_to)
+        stmt = stmt.order_by(QueryLog.created_at.desc()).limit(limit).offset(offset)
         result = await self.db.execute(stmt)
         return list(result.scalars().all())
 

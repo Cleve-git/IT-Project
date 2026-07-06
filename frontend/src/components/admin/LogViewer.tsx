@@ -11,12 +11,21 @@ export const LogViewer: React.FC = () => {
   const [logs, setLogs] = useState<QueryLog[]>([]);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState<'all' | 'success' | 'failed'>('all');
+  const [userFilter, setUserFilter] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
 
-  const fetchLogs = async () => {
+  const fetchLogs = async (overrides?: { filter?: 'all' | 'success' | 'failed' }) => {
     setLoading(true);
     try {
-      const data = await api.getLogs();
+      const activeFilter = overrides?.filter ?? filter;
+      const data = await api.getLogs({
+        user: userFilter || undefined,
+        status: activeFilter === 'all' ? undefined : activeFilter,
+        dateFrom: dateFrom || undefined,
+        dateTo: dateTo || undefined,
+      });
       setLogs(data);
     } catch (err) {
       console.error("Failed to load logs", err);
@@ -27,17 +36,17 @@ export const LogViewer: React.FC = () => {
 
   useEffect(() => {
     fetchLogs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const toggleExpand = (logId: string) => {
     setExpandedLogId(expandedLogId === logId ? null : logId);
   };
 
-  const filteredLogs = logs.filter(log => {
-    if (filter === 'success') return log.status === 'success';
-    if (filter === 'failed') return log.status === 'failed';
-    return true;
-  });
+  const setStatusFilter = (value: 'all' | 'success' | 'failed') => {
+    setFilter(value);
+    fetchLogs({ filter: value });
+  };
 
   return (
     <div className="space-y-4">
@@ -46,28 +55,51 @@ export const LogViewer: React.FC = () => {
           <h3 className="text-base font-bold text-foreground">Execution Logs</h3>
           <p className="text-xs text-muted-foreground font-medium">Monitor natural language query translations and statement performance metrics.</p>
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            type="text"
+            value={userFilter}
+            onChange={(e) => setUserFilter(e.target.value)}
+            placeholder="Filter by user email or name..."
+            className="text-xs px-2.5 py-1.5 rounded-md border border-border bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring w-48"
+          />
+          <input
+            type="date"
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            className="text-xs px-2.5 py-1.5 rounded-md border border-border bg-card text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+          />
+          <span className="text-xs text-muted-foreground">to</span>
+          <input
+            type="date"
+            value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+            className="text-xs px-2.5 py-1.5 rounded-md border border-border bg-card text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+          />
           <div className="flex bg-muted rounded-md p-0.5 border border-border scale-95">
             <button
-              onClick={() => setFilter('all')}
+              onClick={() => setStatusFilter('all')}
               className={`px-3 py-1 rounded-sm text-xs font-semibold cursor-pointer transition-all ${filter === 'all' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
             >
               All
             </button>
             <button
-              onClick={() => setFilter('success')}
+              onClick={() => setStatusFilter('success')}
               className={`px-3 py-1 rounded-sm text-xs font-semibold cursor-pointer transition-all ${filter === 'success' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
             >
               Success
             </button>
             <button
-              onClick={() => setFilter('failed')}
+              onClick={() => setStatusFilter('failed')}
               className={`px-3 py-1 rounded-sm text-xs font-semibold cursor-pointer transition-all ${filter === 'failed' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
             >
               Failed
             </button>
           </div>
-          <Button size="sm" variant="outline" onClick={fetchLogs} disabled={loading} className="border-border">
+          <Button size="sm" variant="outline" onClick={() => fetchLogs()} disabled={loading} className="border-border">
+            Apply
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => fetchLogs()} disabled={loading} className="border-border">
             Refresh
           </Button>
         </div>
@@ -87,14 +119,14 @@ export const LogViewer: React.FC = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredLogs.length === 0 ? (
+            {logs.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} className="text-center text-muted-foreground text-xs italic py-8">
                   No execution logs available for filter choice.
                 </TableCell>
               </TableRow>
             ) : (
-              filteredLogs.map((log) => {
+              logs.map((log) => {
                 const isExpanded = expandedLogId === log.log_id;
                 return (
                   <React.Fragment key={log.log_id}>
@@ -106,12 +138,12 @@ export const LogViewer: React.FC = () => {
                         {isExpanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
                       </TableCell>
                       <TableCell className="py-3 text-xs text-foreground font-semibold max-w-sm truncate">
-                        {log.query_text}
+                        {log.question}
                       </TableCell>
                       <TableCell className="py-3 text-xs text-muted-foreground font-mono">
                         <div className="flex items-center space-x-1">
                           <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                          <span>{log.execution_duration_ms !== null ? `${log.execution_duration_ms}ms` : '0ms'}</span>
+                          <span>{log.execution_time_ms !== null ? `${log.execution_time_ms}ms` : '0ms'}</span>
                         </div>
                       </TableCell>
                       <TableCell className="py-3">
@@ -136,14 +168,14 @@ export const LogViewer: React.FC = () => {
                       <TableRow className="bg-muted/20 border-none">
                         <TableCell colSpan={5} className="p-4 pt-1">
                           <div className="space-y-3 bg-card border border-border rounded-md p-4">
-                            {log.executed_sql && (
+                            {log.generated_sql && (
                               <div className="space-y-1.5">
                                 <span className="text-[10px] uppercase font-bold text-gray-600 dark:text-gray-400 tracking-wider flex items-center space-x-1">
                                   <Terminal className="h-3 w-3" />
                                   <span>Compiled SQL Statement</span>
                                 </span>
                                 <pre className="p-3 bg-gray-900 dark:bg-gray-950 rounded-md text-xs font-mono text-gray-300 border border-border overflow-x-auto leading-normal">
-                                  <code>{log.executed_sql}</code>
+                                  <code>{log.generated_sql}</code>
                                 </pre>
                               </div>
                             )}
@@ -157,7 +189,7 @@ export const LogViewer: React.FC = () => {
                             )}
                             <div className="flex justify-between items-center text-[10px] text-muted-foreground font-mono">
                               <span>Log ID: {log.log_id}</span>
-                              <span>User ID: {log.user_id}</span>
+                              <span>User: {log.user_email ?? log.user_full_name ?? log.user_id}</span>
                             </div>
                           </div>
                         </TableCell>

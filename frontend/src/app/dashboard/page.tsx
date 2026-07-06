@@ -8,6 +8,7 @@ import {
   Plus, Trash2, History, X
 } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
+import { useRequireAuth } from '../../hooks/useRequireAuth';
 import { useChatStore } from '../../store/useChatStore';
 import api from '../../services/api';
 import { ChatWindow } from '../../components/chat/ChatWindow';
@@ -16,19 +17,14 @@ import ThemeToggle from '../../components/ui/ThemeToggle';
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { user, isAuthenticated, clearSession } = useAuthStore();
+  const { clearSession } = useAuthStore();
+  const { user, isAuthenticated, hasHydrated } = useRequireAuth();
   const {
     conversations, currentConversationId,
     setConversations, setCurrentConversationId, setMessages, setLoading
   } = useChatStore();
   const [activePanel, setActivePanel] = useState<'recent' | 'schema' | null>(null);
   const togglePanel = (p: 'recent' | 'schema') => setActivePanel((prev) => (prev === p ? null : p));
-
-  useEffect(() => {
-    if (!isAuthenticated) {
-      router.push('/login');
-    }
-  }, [isAuthenticated, router]);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -68,7 +64,7 @@ export default function DashboardPage() {
     }
   };
 
-  if (!isAuthenticated || !user) {
+  if (!hasHydrated || !isAuthenticated || !user) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground text-xs font-mono">
         Validating user session...

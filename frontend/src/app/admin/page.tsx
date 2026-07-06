@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -8,6 +8,7 @@ import {
   BarChart3, Users, FileSpreadsheet, History, Cpu, Database, Shield
 } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
+import { useRequireAuth } from '../../hooks/useRequireAuth';
 import { Card, CardHeader, CardTitle, CardDescription } from '../../components/ui/card';
 import AnalyticsCard from '../../components/admin/AnalyticsCard';
 import UserManagementTable from '../../components/admin/UserManagementTable';
@@ -18,21 +19,16 @@ import ThemeToggle from '../../components/ui/ThemeToggle';
 
 export default function AdminPage() {
   const router = useRouter();
-  const { user, isAuthenticated, clearSession } = useAuthStore();
+  const { clearSession } = useAuthStore();
+  const { user, isAuthenticated, hasHydrated } = useRequireAuth();
   const [activeTab, setActiveTab] = useState<'analytics' | 'users' | 'documents' | 'logs' | 'benchmarks'>('analytics');
-
-  useEffect(() => {
-    if (!isAuthenticated) {
-      router.push('/login');
-    }
-  }, [isAuthenticated, router]);
 
   const handleLogout = () => {
     clearSession();
     router.push('/login');
   };
 
-  if (!isAuthenticated || !user) {
+  if (!hasHydrated || !isAuthenticated || !user) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground text-xs font-mono">
         Validating administrator credentials...

@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+from typing import Optional
 from sqlalchemy import Column, String, ForeignKey, DateTime, Text, Integer
 from sqlalchemy.orm import relationship
 from app.core.database import Base
@@ -18,3 +19,11 @@ class QueryLog(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     user = relationship("Profile", back_populates="query_logs")
+
+    @property
+    def user_email(self) -> Optional[str]:
+        return self.user.email if self.user else None
+
+    @property
+    def user_full_name(self) -> Optional[str]:
+        return self.user.full_name if self.user else None

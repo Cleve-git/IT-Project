@@ -1,6 +1,6 @@
-import { 
-  Profile, Conversation, Message, UploadedDocument, 
-  ExtractedTable, SystemStats, QueryLog, BenchmarkResult 
+import {
+  Profile, Conversation, Message, UploadedDocument,
+  ExtractedTable, SystemStats, QueryLog, BenchmarkResult, LogFilters
 } from '../types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -115,8 +115,14 @@ class ApiService {
     return this.request<SystemStats>('/api/v1/admin/stats');
   }
 
-  async getLogs(): Promise<QueryLog[]> {
-    return this.request<QueryLog[]>('/api/v1/admin/logs');
+  async getLogs(filters?: LogFilters): Promise<QueryLog[]> {
+    const params = new URLSearchParams();
+    if (filters?.user) params.set('user', filters.user);
+    if (filters?.status) params.set('status', filters.status);
+    if (filters?.dateFrom) params.set('date_from', filters.dateFrom);
+    if (filters?.dateTo) params.set('date_to', filters.dateTo);
+    const qs = params.toString();
+    return this.request<QueryLog[]>(`/api/v1/admin/logs${qs ? `?${qs}` : ''}`);
   }
 
   async listUsers(): Promise<Profile[]> {
