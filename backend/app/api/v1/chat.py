@@ -268,6 +268,14 @@ async def submit_query(
         exec_status = "failed"
         err_msg = str(db_err)
 
+    # Outcome for the audit log: a query that errors OR returns no data at all is a
+    # FAILURE, even though the assistant still produces a message. Aggregates
+    # (COUNT/SUM/AVG) always return one row, so they are never falsely flagged.
+    log_status = exec_status
+    if exec_status == "success" and len(rows) == 0:
+        log_status = "failed"
+        err_msg = "Query executed but returned no data (not found / inaccessible)."
+
     # 6. Explanation and Plotly Config Recommendation
     explanation = ""
     viz_config = None
@@ -280,7 +288,7 @@ async def submit_query(
 
     # 7. Log and Save response
     sql_results_payload = {"columns": columns, "rows": rows} if exec_status == "success" else None
-    
+
     assistant_msg = await conv_repo.add_message(
         conversation_id=conv_id,
         role="assistant",
@@ -296,7 +304,7 @@ async def submit_query(
         query_text=payload.query_text,
         executed_sql=sql,
         execution_duration_ms=duration,
-        status=exec_status,
+        status=log_status,
         error_message=err_msg
     )
 

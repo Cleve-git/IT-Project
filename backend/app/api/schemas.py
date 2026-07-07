@@ -154,6 +154,7 @@ class FeedbackResponse(BaseModel):
 class QueryLogResponse(BaseModel):
     log_id: str
     user_id: str
+    user_email: Optional[str] = None
     query_text: str
     executed_sql: Optional[str] = None
     execution_duration_ms: Optional[int] = None
