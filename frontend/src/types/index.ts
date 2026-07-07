@@ -39,6 +39,7 @@ export interface Message {
 export interface QueryLog {
   log_id: string;
   user_id: string;
+  user_email: string | null;
   query_text: string;
   executed_sql: string | null;
   execution_duration_ms: number | null;

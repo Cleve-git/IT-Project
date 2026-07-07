@@ -5,6 +5,14 @@ import {
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
+export interface LogFilters {
+  status?: string;
+  user?: string;
+  search?: string;
+  start?: string;
+  end?: string;
+}
+
 class ApiService {
   private getAuthToken(): string | null {
     if (typeof window === 'undefined') return null;
@@ -115,8 +123,31 @@ class ApiService {
     return this.request<SystemStats>('/api/v1/admin/stats');
   }
 
-  async getLogs(): Promise<QueryLog[]> {
-    return this.request<QueryLog[]>('/api/v1/admin/logs');
+  async getLogs(filters: LogFilters = {}): Promise<QueryLog[]> {
+    const p = new URLSearchParams();
+    Object.entries(filters).forEach(([k, v]) => { if (v) p.set(k, String(v)); });
+    const qs = p.toString();
+    return this.request<QueryLog[]>(`/api/v1/admin/logs${qs ? `?${qs}` : ''}`);
+  }
+
+  async exportLogs(format: 'pdf' | 'csv', filters: LogFilters = {}): Promise<void> {
+    const p = new URLSearchParams();
+    Object.entries(filters).forEach(([k, v]) => { if (v) p.set(k, String(v)); });
+    const qs = p.toString();
+    const token = this.getAuthToken();
+    const res = await fetch(`${API_BASE_URL}/api/v1/admin/logs/export/${format}${qs ? `?${qs}` : ''}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!res.ok) throw new Error('Export failed');
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `query-logs.${format}`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
   }
 
   async listUsers(): Promise<Profile[]> {
