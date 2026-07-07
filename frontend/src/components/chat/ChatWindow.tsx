@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Terminal, Loader2, ArrowRight, BookOpen } from 'lucide-react';
+import { Send, Terminal, Loader2, ArrowRight, BookOpen, Mic, MicOff } from 'lucide-react';
 import { useChatStore } from '../../store/useChatStore';
 import api from '../../services/api';
 import ChatMessage from './ChatMessage';
@@ -22,12 +22,46 @@ export const ChatWindow: React.FC = () => {
 
   const [input, setInput] = useState('');
   const [loadingHistory, setLoadingHistory] = useState(false);
+  const [listening, setListening] = useState(false);
+  const [speechSupported, setSpeechSupported] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const recognitionRef = useRef<any>(null);
 
   // Scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
+
+  // Voice-to-text via the browser's Web Speech API (Chrome/Edge)
+  useEffect(() => {
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SR) return;
+    setSpeechSupported(true);
+    const rec = new SR();
+    rec.continuous = false;
+    rec.interimResults = true;
+    rec.lang = 'en-US';
+    rec.onresult = (e: any) => {
+      const transcript = Array.from(e.results).map((r: any) => r[0].transcript).join('');
+      setInput(transcript);
+    };
+    rec.onend = () => setListening(false);
+    rec.onerror = () => setListening(false);
+    recognitionRef.current = rec;
+    return () => { try { rec.abort(); } catch { /* ignore */ } };
+  }, []);
+
+  const toggleMic = () => {
+    const rec = recognitionRef.current;
+    if (!rec) return;
+    if (listening) {
+      rec.stop();
+      setListening(false);
+    } else {
+      setInput('');
+      try { rec.start(); setListening(true); } catch { /* already started */ }
+    }
+  };
 
   // Load a conversation's message history whenever one is selected (or after a
   // new chat is created). Selecting "New Chat" sets the id to null -> stays empty.
@@ -163,10 +197,21 @@ export const ChatWindow: React.FC = () => {
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask a question about the business data..."
+              placeholder={listening ? 'Listening…' : 'Ask a question about the business data...'}
               className="flex-1 bg-transparent border-none text-sm text-foreground placeholder-muted-foreground focus:outline-none px-2 py-1.5"
               disabled={isLoading}
             />
+            {speechSupported && (
+              <button
+                type="button"
+                onClick={toggleMic}
+                disabled={isLoading}
+                title={listening ? 'Stop listening' : 'Voice input'}
+                className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 transition-colors cursor-pointer ${listening ? 'text-danger bg-danger/10 animate-pulse' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
+              >
+                {listening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+              </button>
+            )}
             <Button
               type="submit"
               size="sm"
