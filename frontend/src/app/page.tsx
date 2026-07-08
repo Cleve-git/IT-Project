@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -95,12 +96,17 @@ export default function LandingPage() {
         <nav className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
 
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="relative w-8 h-8 flex items-center justify-center shrink-0">
-              <div className="absolute inset-0 bg-[#F97316] rounded-lg transform rotate-6 opacity-90 transition-transform duration-300 group-hover:rotate-12" />
-              <div className="absolute inset-0 bg-[#06B6D4] rounded-lg transform -rotate-6 opacity-80 mix-blend-multiply dark:mix-blend-screen transition-transform duration-300 group-hover:-rotate-12" />
-              <Sparkles className="relative h-4 w-4 text-white z-10" />
-            </div>
-            <span className="font-bold text-lg tracking-tight">Conda AI</span>
+            <Image
+              src="/logo/CondaAI.png"
+              alt="Conda AI logo"
+              width={36}
+              height={36}
+              className="h-9 w-9 object-contain transition-all duration-300 group-hover:opacity-80 dark:invert dark:brightness-200"
+              priority
+            />
+            <span className="font-bold text-lg tracking-tight text-slate-900 dark:text-white transition-colors duration-300">
+              Conda AI
+            </span>
           </Link>
 
           {/* Desktop nav */}
