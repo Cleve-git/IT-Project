@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Sparkles, Terminal, Table as TableIcon, ThumbsUp, ThumbsDown, Copy, Check, MessageSquare, Database } from 'lucide-react';
+import { Sparkles, Terminal, Table as TableIcon, ThumbsUp, ThumbsDown, Copy, Check, MessageSquare, Database, Volume2, VolumeX } from 'lucide-react';
 import { Message } from '../../types';
 import { Button } from '../ui/button';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '../ui/table';
@@ -33,6 +33,25 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
   const [copied, setCopied] = useState(false);
   const [feedback, setFeedback] = useState<'like' | 'dislike' | null>(null);
   const [showSql, setShowSql] = useState(false);
+  const [speaking, setSpeaking] = useState(false);
+  const ttsSupported = typeof window !== 'undefined' && 'speechSynthesis' in window;
+
+  // Text-to-speech for the assistant's reply (mirrors the voice-to-text input feature).
+  const toggleSpeak = () => {
+    if (!ttsSupported) return;
+    window.speechSynthesis.cancel();
+    if (speaking) {
+      setSpeaking(false);
+      return;
+    }
+    const text = message.message || message.content || '';
+    if (!text.trim()) return;
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.onend = () => setSpeaking(false);
+    utterance.onerror = () => setSpeaking(false);
+    window.speechSynthesis.speak(utterance);
+    setSpeaking(true);
+  };
 
   // Compatible mappings for new/old backend schemas
   const isQueryResult = message.type === 'query_result' || !!message.generated_sql;
@@ -88,8 +107,20 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
         </div>
         <div className="flex-1 bg-card border border-border rounded-2xl rounded-tl-sm p-5 shadow-sm">
           {/* Explanation Text */}
-          <div className="prose max-w-none text-sm text-foreground leading-relaxed font-normal whitespace-pre-wrap">
-            {renderInlineMarkdown(message.message || message.content || '')}
+          <div className="flex items-start justify-between gap-3">
+            <div className="prose max-w-none text-sm text-foreground leading-relaxed font-normal whitespace-pre-wrap">
+              {renderInlineMarkdown(message.message || message.content || '')}
+            </div>
+            {ttsSupported && (
+              <button
+                type="button"
+                onClick={toggleSpeak}
+                title={speaking ? 'Stop reading aloud' : 'Read aloud'}
+                className={`h-7 w-7 rounded-lg flex items-center justify-center shrink-0 transition-colors cursor-pointer ${speaking ? 'text-primary bg-primary/10 animate-pulse' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
+              >
+                {speaking ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
+              </button>
+            )}
           </div>
 
           {/* Referenced from — data provenance / citation */}

@@ -1,0 +1,7 @@
+customer_id,status,order_total
+1,completed,458000
+250,completed,1240000
+500,cancelled,89000
+750,completed,675000
+999,refunded,320000
+1001,completed,150000

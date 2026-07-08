@@ -1,0 +1,7 @@
+order_id,amount,method,status
+1,458000,e_wallet,paid
+2,220000,credit_card,paid
+3,875000,bank_transfer,paid
+100,145000,virtual_account,paid
+5000,990000,credit_card,refunded
+10000,2250000,e_wallet,paid

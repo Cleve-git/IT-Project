@@ -5,7 +5,7 @@ from fastapi.responses import JSONResponse
 from app.core.config import settings
 from app.core.database import engine, Base, AsyncSessionLocal
 from app.core.seeder import seed_database
-from app.api.v1 import auth, chat, documents, admin
+from app.api.v1 import auth, chat, documents, admin, business_data
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -64,6 +64,7 @@ app.include_router(auth.router, prefix="/api/v1")
 app.include_router(chat.router, prefix="/api/v1")
 app.include_router(documents.router, prefix="/api/v1")
 app.include_router(admin.router, prefix="/api/v1")
+app.include_router(business_data.router, prefix="/api/v1")
 
 @app.get("/")
 def read_root():

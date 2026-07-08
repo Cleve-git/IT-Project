@@ -80,12 +80,53 @@ export interface SystemStats {
   query_success_rate: number;
 }
 
+// --- Business Data Admin ---
+export interface Customer {
+  customer_id: number;
+  name: string;
+  city: string;
+  tier: 'Gold' | 'Silver' | 'Bronze';
+  created_at: string;
+}
+
+export interface Product {
+  product_id: number;
+  product_name: string;
+  category: 'Beauty' | 'Electronics' | 'Fashion' | 'Grocery' | 'Home' | 'Office' | 'Sports' | 'Toys';
+  unit_price: number;
+  cost: number;
+}
+
+export interface Order {
+  order_id: number;
+  customer_id: number;
+  order_date: string;
+  status: 'completed' | 'cancelled' | 'refunded';
+  order_total: number;
+}
+
+export interface Payment {
+  payment_id: number;
+  order_id: number;
+  amount: number;
+  method: 'credit_card' | 'e_wallet' | 'bank_transfer' | 'virtual_account';
+  paid_date: string;
+  status: 'paid' | 'refunded';
+}
+
+export interface ImportResult {
+  inserted: number;
+  failed: number;
+  errors: { row: number; message: string }[];
+}
+
 export interface BenchmarkResult {
   benchmark_id: string;
   nl_query: string;
   expected_sql: string;
   generated_sql: string | null;
   is_correct: boolean;
+  outcome: 'correct' | 'clarification' | 'mismatch';
   execution_time_ms: number | null;
   error_message: string | null;
   category: string | null;

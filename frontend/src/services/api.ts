@@ -1,6 +1,7 @@
-import { 
-  Profile, Conversation, Message, UploadedDocument, 
-  ExtractedTable, SystemStats, QueryLog, BenchmarkResult 
+import {
+  Profile, Conversation, Message, UploadedDocument,
+  ExtractedTable, SystemStats, QueryLog, BenchmarkResult,
+  Customer, Product, Order, Payment, ImportResult
 } from '../types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -168,6 +169,40 @@ class ApiService {
     const qs = params.toString();
     return this.request<BenchmarkResult[]>(`/api/v1/admin/benchmarks/run${qs ? `?${qs}` : ''}`, {
       method: 'POST',
+    });
+  }
+
+  // --- Business Data Admin API (CRUD + CSV import for customers/products/orders/payments) ---
+  async listBusinessData<T>(entity: string): Promise<T[]> {
+    return this.request<T[]>(`/api/v1/admin/data/${entity}`);
+  }
+
+  async createBusinessData<T>(entity: string, payload: Record<string, any>): Promise<T> {
+    return this.request<T>(`/api/v1/admin/data/${entity}`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async updateBusinessData<T>(entity: string, id: number, payload: Record<string, any>): Promise<T> {
+    return this.request<T>(`/api/v1/admin/data/${entity}/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async deleteBusinessData(entity: string, id: number): Promise<{ success: boolean }> {
+    return this.request<{ success: boolean }>(`/api/v1/admin/data/${entity}/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async importBusinessData(entity: string, file: File): Promise<ImportResult> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.request<ImportResult>(`/api/v1/admin/data/${entity}/import`, {
+      method: 'POST',
+      body: formData,
     });
   }
 }

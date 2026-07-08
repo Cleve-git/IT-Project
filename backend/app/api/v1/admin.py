@@ -230,9 +230,14 @@ async def run_benchmarks(
         is_ambiguous, clarification, gen_sql, reasoning = await analyst_service.generate_sql(nl)
 
         is_correct = False
+        # "clarification" means the agent correctly recognized an ambiguous
+        # question and asked for more info — that's not a wrong answer, so it
+        # must not be scored the same as a genuine "mismatch" (wrong/failed SQL).
+        outcome = "mismatch"
         error_msg: Optional[str] = None
 
         if is_ambiguous or not gen_sql:
+            outcome = "clarification"
             error_msg = clarification or "Agent marked the question ambiguous or produced no SQL"
         elif not await analyst_service.check_sql_safety(gen_sql):
             error_msg = "Guardrail blocked generated SQL (not read-only)"
@@ -247,7 +252,9 @@ async def run_benchmarks(
                     error_msg = f"Generated SQL failed to execute: {gen_err}"
                 else:
                     is_correct = analyst_service.compare_result_sets(gold_rows, gen_rows)
-                    if not is_correct:
+                    if is_correct:
+                        outcome = "correct"
+                    else:
                         error_msg = "Result set did not match the gold answer"
 
         scored.append({
@@ -255,6 +262,7 @@ async def run_benchmarks(
             "expected_sql": gold_sql,
             "generated_sql": gen_sql,
             "is_correct": is_correct,
+            "outcome": outcome,
             "execution_time_ms": int((time.time() - start_time) * 1000),
             "error_message": error_msg,
             "category": test["category"],
@@ -274,6 +282,7 @@ async def run_benchmarks(
             expected_sql=s["expected_sql"],
             generated_sql=s["generated_sql"],
             is_correct=s["is_correct"],
+            outcome=s["outcome"],
             execution_time_ms=s["execution_time_ms"],
             error_message=s["error_message"],
             category=s["category"],

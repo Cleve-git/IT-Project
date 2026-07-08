@@ -90,6 +90,12 @@ Rules:
    (the selling price). products.cost is the internal cost of goods — use it ONLY
    for profit/margin/markup calculations, never as the product's price.
 8. If the question is ambiguous or lacks enough information to write a valid query, ask a clarification question.
+8b. CLARIFICATION STYLE: phrase `clarification_question` in plain natural language only —
+    never include SQL syntax, column names, table names, or operators (e.g. do NOT write
+    something like `orders.status = 'completed'`). Ask about the business concept directly
+    and offer concrete plain-language options instead, e.g. "Should this include only
+    completed orders, or also cancelled and refunded ones?" or "Do you mean all customers,
+    or just Gold tier?"
 9. FOLLOW-UPS: the conversation history above shows earlier questions and the SQL
    you used. When the new question is a follow-up that refers to a previous result
    (e.g. "break it down by month", "only Gold tier", "what about last month",

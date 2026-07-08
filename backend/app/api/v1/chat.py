@@ -1,3 +1,4 @@
+import random
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
@@ -16,6 +17,34 @@ from app.domain.models import Feedback
 from app.services.intent_service import IntentService
 
 router = APIRouter(prefix="/chat", tags=["Conversational Analyst"])
+
+# Varied replies for out-of-scope questions so the agent doesn't repeat the
+# exact same canned line every time (still points the user back to what it can do).
+OUT_OF_SCOPE_RESPONSES = [
+    "I'm a data analyst for your business database — I can only answer "
+    "questions about your customers, products, orders, and payments. "
+    "I can't help with that topic. Try asking something like "
+    "\"What is our total revenue?\" or \"Who are our top customers?\"",
+
+    "That's outside what I can help with — I'm built to analyze your "
+    "business data (customers, products, orders, payments), not general "
+    "topics. Maybe try \"What are our best selling products?\" instead.",
+
+    "I don't have an answer for that — my job is analyzing your company's "
+    "data, not general knowledge. Ask me something like \"Show total "
+    "revenue by month\" or \"List our Gold tier customers.\"",
+
+    "Not something I can look into, I'm afraid — I only work with your "
+    "business database. Try a question like \"How many orders were placed "
+    "last month?\" or \"What's our average order value?\"",
+
+    "I'll have to pass on that one — I'm scoped to your customers, "
+    "products, orders, and payments data. Something like \"Who are our top "
+    "customers?\" is more my speed.",
+
+    "That's beyond my scope — I can only dig into your business data. "
+    "Try asking about revenue, top products, or customer trends instead.",
+]
 
 @router.get("/conversations", response_model=List[ConversationResponse])
 async def list_conversations(
@@ -159,12 +188,7 @@ async def submit_query(
                 "SQL structure and explain the results in plain business terms."
             )
         elif intent == "OUT_OF_SCOPE":
-            content = (
-                "I'm a data analyst for your business database — I can only answer "
-                "questions about your customers, products, orders, and payments. "
-                "I can't help with that topic. Try asking something like "
-                "\"What is our total revenue?\" or \"Who are our top customers?\""
-            )
+            content = random.choice(OUT_OF_SCOPE_RESPONSES)
         else: # SMALL_TALK or others
             content = (
                 "I'm here to help you analyze your business database. "

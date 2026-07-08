@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Play, ShieldAlert, CheckCircle, Clock, Zap, Cpu } from 'lucide-react';
+import { Play, ShieldAlert, CheckCircle, Clock, Zap, Cpu, HelpCircle } from 'lucide-react';
 import { BenchmarkResult } from '../../types';
 import api from '../../services/api';
 import { Button } from '../ui/button';
@@ -29,6 +29,7 @@ export const BenchmarkRunner: React.FC = () => {
 
   const totalTests = results.length;
   const correctCount = results.filter(r => r.is_correct).length;
+  const clarificationCount = results.filter(r => r.outcome === 'clarification').length;
   const accuracy = totalTests > 0 ? Math.round((correctCount / totalTests) * 100) : 0;
   const avgLatency = totalTests > 0
     ? Math.round(results.reduce((acc, curr) => acc + (curr.execution_time_ms || 0), 0) / totalTests)
@@ -93,7 +94,7 @@ export const BenchmarkRunner: React.FC = () => {
 
       {/* Summary Scorecards */}
       {results.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="bg-muted/50 border border-border rounded-xl p-4 flex items-center space-x-3">
             <div className="h-10 w-10 bg-primary/10 text-primary rounded-lg flex items-center justify-center">
               <Zap className="h-5 w-5" />
@@ -101,6 +102,16 @@ export const BenchmarkRunner: React.FC = () => {
             <div>
               <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider font-semibold">Execution Accuracy</span>
               <div className="text-lg font-bold text-foreground mt-0.5">{correctCount} / {totalTests} ({accuracy}%)</div>
+            </div>
+          </div>
+
+          <div className="bg-muted/50 border border-border rounded-xl p-4 flex items-center space-x-3">
+            <div className="h-10 w-10 bg-warning/10 text-warning rounded-lg flex items-center justify-center">
+              <HelpCircle className="h-5 w-5" />
+            </div>
+            <div>
+              <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider font-semibold">Needs Clarification</span>
+              <div className="text-lg font-bold text-foreground mt-0.5">{clarificationCount} / {totalTests}</div>
             </div>
           </div>
 
@@ -173,10 +184,15 @@ export const BenchmarkRunner: React.FC = () => {
                   {r.execution_time_ms}ms
                 </TableCell>
                 <TableCell className="py-3">
-                  {r.is_correct ? (
+                  {r.outcome === 'correct' ? (
                     <span className="inline-flex items-center text-success text-xs font-bold">
                       <CheckCircle className="h-3.5 w-3.5 mr-1" />
                       Match
+                    </span>
+                  ) : r.outcome === 'clarification' ? (
+                    <span className="inline-flex items-center text-warning text-xs font-bold">
+                      <HelpCircle className="h-3.5 w-3.5 mr-1" />
+                      Needs Clarification
                     </span>
                   ) : (
                     <span className="inline-flex items-center text-danger text-xs font-bold">
@@ -186,9 +202,13 @@ export const BenchmarkRunner: React.FC = () => {
                   )}
                 </TableCell>
                 <TableCell className="py-3 text-xs text-muted-foreground">
-                  {r.is_correct ? (
+                  {r.outcome === 'correct' ? (
                     <span className="text-muted-foreground font-mono text-[10px] truncate max-w-[220px] block">
                       {r.generated_sql}
+                    </span>
+                  ) : r.outcome === 'clarification' ? (
+                    <span className="text-warning font-medium">
+                      {r.error_message || 'Agent asked for clarification'}
                     </span>
                   ) : (
                     <span className="text-danger font-medium">

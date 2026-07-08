@@ -203,12 +203,174 @@ class SystemStatsResponse(BaseModel):
     total_documents: int
     query_success_rate: float
 
+# --- Business Data Admin (CRUD + CSV import for customers/products/orders/payments) ---
+# Allowed values as actually seeded/queried against the live database (see
+# DB_SCHEMA_CONTEXT in analyst_service.py) — not the stale examples in domain/models.py.
+CUSTOMER_TIERS = {"Gold", "Silver", "Bronze"}
+PRODUCT_CATEGORIES = {"Beauty", "Electronics", "Fashion", "Grocery", "Home", "Office", "Sports", "Toys"}
+ORDER_STATUSES = {"completed", "cancelled", "refunded"}
+PAYMENT_METHODS = {"credit_card", "e_wallet", "bank_transfer", "virtual_account"}
+PAYMENT_STATUSES = {"paid", "refunded"}
+
+
+def _check_choice(value: Optional[str], allowed: set, field: str) -> Optional[str]:
+    if value is not None and value not in allowed:
+        raise ValueError(f"{field} must be one of {sorted(allowed)}, got {value!r}")
+    return value
+
+
+class CustomerCreate(BaseModel):
+    name: str
+    city: str
+    tier: str
+
+    @model_validator(mode="after")
+    def _validate(self):
+        _check_choice(self.tier, CUSTOMER_TIERS, "tier")
+        return self
+
+class CustomerUpdate(BaseModel):
+    name: Optional[str] = None
+    city: Optional[str] = None
+    tier: Optional[str] = None
+
+    @model_validator(mode="after")
+    def _validate(self):
+        _check_choice(self.tier, CUSTOMER_TIERS, "tier")
+        return self
+
+class CustomerResponse(BaseModel):
+    customer_id: int
+    name: str
+    city: str
+    tier: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class ProductCreate(BaseModel):
+    product_name: str
+    category: str
+    unit_price: float
+    cost: float
+
+    @model_validator(mode="after")
+    def _validate(self):
+        _check_choice(self.category, PRODUCT_CATEGORIES, "category")
+        return self
+
+class ProductUpdate(BaseModel):
+    product_name: Optional[str] = None
+    category: Optional[str] = None
+    unit_price: Optional[float] = None
+    cost: Optional[float] = None
+
+    @model_validator(mode="after")
+    def _validate(self):
+        _check_choice(self.category, PRODUCT_CATEGORIES, "category")
+        return self
+
+class ProductResponse(BaseModel):
+    product_id: int
+    product_name: str
+    category: str
+    unit_price: float
+    cost: float
+
+    class Config:
+        from_attributes = True
+
+
+class OrderCreate(BaseModel):
+    customer_id: int
+    order_date: Optional[datetime] = None
+    status: str
+    order_total: float
+
+    @model_validator(mode="after")
+    def _validate(self):
+        _check_choice(self.status, ORDER_STATUSES, "status")
+        return self
+
+class OrderUpdate(BaseModel):
+    customer_id: Optional[int] = None
+    order_date: Optional[datetime] = None
+    status: Optional[str] = None
+    order_total: Optional[float] = None
+
+    @model_validator(mode="after")
+    def _validate(self):
+        _check_choice(self.status, ORDER_STATUSES, "status")
+        return self
+
+class OrderResponse(BaseModel):
+    order_id: int
+    customer_id: int
+    order_date: datetime
+    status: str
+    order_total: float
+
+    class Config:
+        from_attributes = True
+
+
+class PaymentCreate(BaseModel):
+    order_id: int
+    amount: float
+    method: str
+    paid_date: Optional[datetime] = None
+    status: str
+
+    @model_validator(mode="after")
+    def _validate(self):
+        _check_choice(self.method, PAYMENT_METHODS, "method")
+        _check_choice(self.status, PAYMENT_STATUSES, "status")
+        return self
+
+class PaymentUpdate(BaseModel):
+    order_id: Optional[int] = None
+    amount: Optional[float] = None
+    method: Optional[str] = None
+    paid_date: Optional[datetime] = None
+    status: Optional[str] = None
+
+    @model_validator(mode="after")
+    def _validate(self):
+        _check_choice(self.method, PAYMENT_METHODS, "method")
+        _check_choice(self.status, PAYMENT_STATUSES, "status")
+        return self
+
+class PaymentResponse(BaseModel):
+    payment_id: int
+    order_id: int
+    amount: float
+    method: str
+    paid_date: datetime
+    status: str
+
+    class Config:
+        from_attributes = True
+
+
+class ImportErrorItem(BaseModel):
+    row: int
+    message: str
+
+class ImportResultResponse(BaseModel):
+    inserted: int
+    failed: int
+    errors: List[ImportErrorItem]
+
+
 class BenchmarkResultResponse(BaseModel):
     benchmark_id: str
     nl_query: str
     expected_sql: str
     generated_sql: Optional[str] = None
     is_correct: bool
+    outcome: str = "mismatch"  # "correct" | "clarification" | "mismatch" — transient, not persisted
     execution_time_ms: Optional[int] = None
     error_message: Optional[str] = None
     category: Optional[str] = None  # transient grouping label, not persisted
