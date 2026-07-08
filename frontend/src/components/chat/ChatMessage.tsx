@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Sparkles, Terminal, Table as TableIcon, ThumbsUp, ThumbsDown, Copy, Check, MessageSquare } from 'lucide-react';
+import { Sparkles, Terminal, Table as TableIcon, ThumbsUp, ThumbsDown, Copy, Check, MessageSquare, Database } from 'lucide-react';
 import { Message } from '../../types';
 import { Button } from '../ui/button';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '../ui/table';
@@ -91,6 +91,27 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
           <div className="prose max-w-none text-sm text-foreground leading-relaxed font-normal whitespace-pre-wrap">
             {renderInlineMarkdown(message.message || message.content || '')}
           </div>
+
+          {/* Referenced from — data provenance / citation */}
+          {isQueryResult && message.references && message.references.tables.length > 0 && (
+            <div className="mt-3 flex flex-wrap items-center gap-1.5 text-[11px]">
+              <span className="inline-flex items-center gap-1 text-muted-foreground font-medium">
+                <Database className="h-3 w-3" /> Referenced from:
+              </span>
+              {message.references.tables.map((t) => (
+                <span
+                  key={t.table}
+                  title={t.description}
+                  className="inline-flex items-center px-2 py-0.5 rounded-md bg-muted/60 border border-border/60 font-mono text-foreground/80"
+                >
+                  {t.table}
+                </span>
+              ))}
+              <span className="text-muted-foreground/70">
+                · {message.references.row_count} row{message.references.row_count === 1 ? '' : 's'} · live database
+              </span>
+            </div>
+          )}
 
           {/* Compact view for single-value answers: just an on-demand SQL toggle */}
           {isQueryResult && sqlContent && isScalar && (

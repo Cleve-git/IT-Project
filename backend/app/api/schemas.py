@@ -1,6 +1,33 @@
+import re
 from pydantic import BaseModel, Field, model_validator
 from typing import List, Dict, Optional, Any
 from datetime import datetime
+
+# --- Data provenance (reference) helper ---
+_TABLE_RE = re.compile(r"\b(?:FROM|JOIN)\s+([a-zA-Z_][a-zA-Z0-9_]*)", re.IGNORECASE)
+_TABLE_DESCRIPTIONS = {
+    "customers": "Customer records",
+    "products": "Product catalog",
+    "orders": "Order headers",
+    "order_items": "Order line items",
+    "payments": "Payment transactions",
+}
+
+def _extract_references(sql: Optional[str], rows: Optional[list]) -> Dict[str, Any]:
+    """Derive where an answer came from: the source tables the SQL read and how
+    many rows backed the result. Used to show a citation under each answer."""
+    tables: List[Dict[str, str]] = []
+    seen = set()
+    for name in _TABLE_RE.findall(sql or ""):
+        t = name.lower()
+        if t in _TABLE_DESCRIPTIONS and t not in seen:
+            seen.add(t)
+            tables.append({"table": t, "description": _TABLE_DESCRIPTIONS[t]})
+    return {
+        "tables": tables,
+        "row_count": len(rows or []),
+        "source": "Live company database (PostgreSQL)",
+    }
 
 # --- Profile & Auth ---
 class ProfileBase(BaseModel):
@@ -53,6 +80,7 @@ class MessageResponse(BaseModel):
     sql: Optional[str] = None
     results: Optional[List[Dict[str, Any]]] = None
     visualization: Optional[Dict[str, Any]] = None
+    references: Optional[Dict[str, Any]] = None  # data provenance: source tables + row count
 
     @model_validator(mode="before")
     @classmethod
@@ -85,17 +113,20 @@ class MessageResponse(BaseModel):
             res_dict = data.copy()
 
         if generated_sql:
+            rows = sql_results.get("rows", []) if (sql_results and isinstance(sql_results, dict)) else []
             res_dict["type"] = "query_result"
             res_dict["sql"] = generated_sql
-            res_dict["results"] = sql_results.get("rows", []) if (sql_results and isinstance(sql_results, dict)) else []
+            res_dict["results"] = rows
             res_dict["visualization"] = visualization_config
             res_dict["message"] = None
+            res_dict["references"] = _extract_references(generated_sql, rows)
         else:
             res_dict["type"] = "conversation"
             res_dict["message"] = content
             res_dict["sql"] = None
             res_dict["results"] = None
             res_dict["visualization"] = None
+            res_dict["references"] = None
 
         return res_dict
 
