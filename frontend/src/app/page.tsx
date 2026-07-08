@@ -25,10 +25,10 @@ import { useAuthStore } from '../store/useAuthStore';
 import ColorBends from '../components/ColorBends';
 
 const FEATURES = [
-  { icon: Shield, title: 'Read-only & safe', desc: 'Every query is validated — only SELECT runs. Writes and DDL are blocked by guardrails.' },
+  { icon: Shield, title: 'Read-only & safe', desc: 'Every query is validated, only SELECT runs. Writes and DDL are blocked by guardrails.' },
   { icon: BarChart3, title: 'Answer, chart & explanation', desc: 'Get the result, an auto-selected chart, and a plain-language summary of what it means.' },
-  { icon: MessageSquare, title: 'Remembers the conversation', desc: "Ask follow-ups like 'only the Gold tier' or 'break it down by month' — it keeps context." },
-  { icon: Database, title: 'Grounded in your data', desc: 'Answers come only from your database, with a citation of the source tables — never made up.' },
+  { icon: MessageSquare, title: 'Remembers the conversation', desc: "Ask follow-ups like 'only the Gold tier' or 'break it down by month' and the context will be remembered." },
+  { icon: Database, title: 'Grounded in your data', desc: 'Answers come only from your database, with a citation of the source tables, never made up.' },
   { icon: Mic, title: 'Voice to text', desc: 'Speak your question and let the analyst transcribe and run it for you.' },
   { icon: FileText, title: 'Audit & export', desc: 'Every query is logged and filterable: export the report to PDF or CSV in one click.' },
 ];
@@ -170,7 +170,7 @@ export default function LandingPage() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
-          className="inline-flex items-center text-[10px] font-bold uppercase tracking-widest text-[#F97316] bg-[#F97316]/10 border border-[#F97316]/20 px-3.5 py-1.5 rounded-full select-none"
+          className="inline-flex items-center text-[10px] font-bold uppercase tracking-widest text-[#F97316] bg-[#F97316]/10 px-3.5 py-1.5 rounded-full select-none"
         >
           CONVERSATIONAL DATA ANALYST
         </motion.span>
@@ -179,7 +179,7 @@ export default function LandingPage() {
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
-          className="text-5xl md:text-6xl font-bold tracking-tight text-slate-900 dark:text-white mt-5 leading-[1.1]"
+          className="text-5xl md:text-6xl font-bold tracking-tight text-slate-900 dark:text-white mt-5 leading-[1.1] dark:[text-shadow:0_2px_24px_rgba(0,0,0,1),0_0_48px_rgba(0,0,0,0.9)]"
         >
           Chat with your database<br className="hidden md:inline" /> in plain language
         </motion.h1>
@@ -188,9 +188,9 @@ export default function LandingPage() {
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="mt-6 text-slate-600 dark:text-slate-400 max-w-2xl text-base md:text-lg leading-relaxed"
+          className="mt-6 text-slate-600 dark:text-slate-100 max-w-2xl text-base md:text-lg leading-relaxed dark:[text-shadow:0_1px_16px_rgba(0,0,0,1),0_0_32px_rgba(0,0,0,0.8)]"
         >
-          Ask a business question and get a safe SQL query, the answer, a chart, and a plain-language explanation — grounded entirely in your data, never invented.
+          Ask a business question and get a safe SQL query, the answer, a chart, and a plain-language explanation grounded entirely in your data, never invented.
         </motion.p>
 
         <motion.div
@@ -220,7 +220,7 @@ export default function LandingPage() {
           initial={{ opacity: 0, y: 25 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.4 }}
-          className="rounded-2xl border border-slate-200/70 dark:border-slate-800/70 bg-white/80 dark:bg-[#0B1329]/80 backdrop-blur-sm p-5 md:p-6 shadow-xl shadow-slate-200/40 dark:shadow-none space-y-5"
+          className="rounded-2xl border border-slate-200/70 dark:border-slate-800/70 bg-white/20 dark:bg-[#0B1329]/20 backdrop-blur-lg p-5 md:p-6 shadow-xl shadow-slate-200/40 dark:shadow-none space-y-5"
         >
           <div className="flex justify-end">
             <div className="bg-[#F97316] text-white rounded-2xl rounded-tr-sm px-4 py-2.5 text-sm font-medium shadow-sm">
@@ -229,23 +229,29 @@ export default function LandingPage() {
           </div>
 
           <div className="flex items-start gap-3">
-            <div className="h-8 w-8 rounded-lg bg-slate-900 dark:bg-white flex items-center justify-center shrink-0">
-              <Sparkles className="h-4 w-4 text-white dark:text-slate-950" />
+            <div className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0">
+              <Image
+              src="/logo/CondaAI.png"
+              alt="Conda AI logo"
+              width={20}
+              height={20}
+              className="h-9 w-9 object-contain transition-all duration-300 group-hover:opacity-80 dark:invert dark:brightness-200"
+              priority
+            />
             </div>
             <div className="flex-1 space-y-3">
               <p className="text-sm text-slate-800 dark:text-slate-100 leading-relaxed">
                 Your total revenue from paid transactions is <strong>Rp 14,970,758,000</strong>.
               </p>
               <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800/80 border border-slate-200/60 dark:border-slate-700/50">
-                  📄 Referenced from: payment.csv
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800/80">
+                  Referenced from: payment.csv
                 </span>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800/80 border border-slate-200/60 dark:border-slate-700/50">
-                  <span className="h-1.5 w-1.5 bg-green-500 rounded-full animate-pulse" />
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800/80">
                   live database
                 </span>
               </div>
-              <div className="bg-[#050B14] text-left p-3.5 rounded-lg font-mono text-[11px] text-sky-400 border border-slate-800/50 overflow-x-auto whitespace-nowrap">
+            <div className="bg-slate-200/60 dark:bg-[#0B1329]/60 text-left p-3.5 rounded-lg font-mono text-[11px] text-slate-800 dark:text-slate-100 overflow-x-auto whitespace-nowrap">
                 <span className="text-slate-500 select-none">&gt; </span>SELECT SUM(amount) FROM payments WHERE status = &apos;paid&apos;;
               </div>
             </div>
@@ -260,7 +266,7 @@ export default function LandingPage() {
             Built for trustworthy self-service analytics
           </h2>
           <p className="mt-2 text-sm md:text-base text-slate-500 dark:text-slate-400">
-            Everyone gets answers in seconds — safely, and grounded in the data.
+            Everyone gets answers in seconds, safely, and grounded in the data.
           </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -271,12 +277,12 @@ export default function LandingPage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: '-50px' }}
               transition={{ duration: 0.4, delay: i * 0.05 }}
-              className="rounded-2xl border border-slate-200/60 dark:border-slate-800/80 bg-white/60 dark:bg-[#0B1329]/60 p-6 shadow-sm hover:border-slate-300 dark:hover:border-slate-700/80 transition-all duration-300"
+              className="rounded-2xl border border-slate-200/60 dark:border-slate-800/80 bg-white/60 dark:bg-[#0B1329]/20 p-6 hover:border-slate-300 dark:hover:border-slate-700/80 transition-all duration-300"
             >
-              <div className="h-10 w-10 rounded-xl bg-[#F97316]/10 text-[#F97316] flex items-center justify-center mb-4">
-                <f.icon className="h-5 w-5" />
+              <div className="flex items-center gap-3 mb-3 text-slate-900 dark:text-white">
+                <f.icon className="h-5 w-5 shrink-0" />
+                <h3 className="text-base font-semibold">{f.title}</h3>
               </div>
-              <h3 className="text-base font-semibold text-slate-900 dark:text-white">{f.title}</h3>
               <p className="mt-2 text-sm text-slate-500 dark:text-slate-400 leading-relaxed">{f.desc}</p>
             </motion.div>
           ))}
@@ -317,14 +323,14 @@ export default function LandingPage() {
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
-          className="rounded-3xl border border-slate-200/80 dark:border-slate-800/80 bg-white/80 dark:bg-[#0B1329]/70 p-10 text-center shadow-lg relative overflow-hidden"
+          className="rounded-3xl border border-slate-200/80 dark:border-slate-800/80 bg-white/20 dark:bg-[#0B1329]/20 p-10 text-center relative overflow-hidden"
         >
           <Quote className="h-10 w-10 text-[#F97316]/20 mx-auto mb-4 rotate-180" />
           <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
             Stop waiting in the analytics queue
           </h2>
           <p className="mt-3 text-sm text-slate-500 dark:text-slate-400 max-w-xl mx-auto leading-relaxed">
-            Ask your data anything — no SQL required. Sign in with a sandbox account to try it now.
+            Ask your data anything, no SQL required. Sign in with a sandbox account to try it now.
           </p>
           <div className="mt-8">
             <Link
@@ -340,8 +346,8 @@ export default function LandingPage() {
       {/* ── Footer ── */}
       <footer className="relative w-full z-10 mt-12 border-t border-slate-200 dark:border-slate-800/80">
         <div className="max-w-6xl mx-auto px-6 py-6 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 dark:text-slate-400 gap-4">
-          <span>&copy; Conda AI — Conversational Data Analyst</span>
-          <span>Read-only &bull; PostgreSQL &bull; Project 1</span>
+          <span>&copy; Conda AI - Conversational Data Analyst</span>
+          <span>Read-only &bull; PostgreSQL &bull; Project</span>
         </div>
       </footer>
 
