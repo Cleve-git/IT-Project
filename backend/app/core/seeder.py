@@ -21,20 +21,23 @@ MOCK_PROFILES = [
     }
 ]
 
+# Mock values mirror the real dataset's enums (tier: Gold/Silver/Bronze,
+# Indonesian cities, real product categories) so an offline/local seed behaves
+# like production. Keep these in sync with DB_SCHEMA_CONTEXT in analyst_service.
 MOCK_CUSTOMERS = [
-    {"name": "Acme Corporation", "city": "New York", "tier": "Premium"},
-    {"name": "Starlight Industries", "city": "Los Angeles", "tier": "Premium"},
-    {"name": "Nova Retail", "city": "Chicago", "tier": "Standard"},
-    {"name": "Apex Consulting", "city": "Houston", "tier": "Basic"},
-    {"name": "Zenith Ventures", "city": "San Francisco", "tier": "Standard"}
+    {"name": "Acme Corporation", "city": "Jakarta", "tier": "Gold"},
+    {"name": "Starlight Industries", "city": "Surabaya", "tier": "Gold"},
+    {"name": "Nova Retail", "city": "Bandung", "tier": "Silver"},
+    {"name": "Apex Consulting", "city": "Medan", "tier": "Bronze"},
+    {"name": "Zenith Ventures", "city": "Semarang", "tier": "Silver"}
 ]
 
 MOCK_PRODUCTS = [
-    {"name": "Cloud Data Platform", "price": Decimal("1500.00"), "cost": Decimal("300.00")},
-    {"name": "Enterprise Analytics Suite", "price": Decimal("2500.00"), "cost": Decimal("500.00")},
-    {"name": "Data Integration Pipeline", "price": Decimal("800.00"), "cost": Decimal("150.00")},
-    {"name": "Premium Support Contract", "price": Decimal("500.00"), "cost": Decimal("200.00")},
-    {"name": "ML Model Deployment Package", "price": Decimal("5000.00"), "cost": Decimal("1500.00")}
+    {"product_name": "Cloud Data Platform", "category": "Software", "unit_price": Decimal("1500.00"), "cost": Decimal("300.00")},
+    {"product_name": "Enterprise Analytics Suite", "category": "Software", "unit_price": Decimal("2500.00"), "cost": Decimal("500.00")},
+    {"product_name": "Data Integration Pipeline", "category": "Software", "unit_price": Decimal("800.00"), "cost": Decimal("150.00")},
+    {"product_name": "Premium Support Contract", "category": "Support", "unit_price": Decimal("500.00"), "cost": Decimal("200.00")},
+    {"product_name": "ML Model Deployment Package", "category": "Consulting", "unit_price": Decimal("5000.00"), "cost": Decimal("1500.00")}
 ]
 
 async def seed_database(db: AsyncSession):
@@ -88,7 +91,8 @@ async def seed_database(db: AsyncSession):
             order = Order(
                 customer=customer,
                 order_date=order_date,
-                status=random.choice(["Completed", "Completed", "Completed", "Pending", "Cancelled"])
+                status=random.choice(["Completed", "Completed", "Completed", "Pending", "Cancelled"]),
+                order_total=Decimal("0.00")  # placeholder, calculate below
             )
             db.add(order)
             await db.flush()  # get order.order_id
@@ -106,6 +110,35 @@ async def seed_database(db: AsyncSession):
                 order_items.append(item)
             
             db.add_all(order_items)
+
+            # Create payment if completed or pending (some payments might fail)
+            if order.status == "Completed":
+                pay = Payment(
+                    order_id=order.order_id,
+                    amount=order_total,
+                    method=random.choice(["Credit Card", "PayPal", "Bank Transfer"]),
+                    paid_date=order_date + timedelta(minutes=random.randint(5, 120)),
+                    status="Success"
+                )
+                db.add(pay)
+            elif order.status == "Pending" and random.random() > 0.3:
+                pay = Payment(
+                    order_id=order.order_id,
+                    amount=order_total,
+                    method=random.choice(["Credit Card", "PayPal"]),
+                    paid_date=order_date,
+                    status="Pending"
+                )
+                db.add(pay)
+            elif order.status == "Cancelled":
+                pay = Payment(
+                    order_id=order.order_id,
+                    amount=order_total,
+                    method="Credit Card",
+                    paid_date=order_date,
+                    status="Failed"
+                )
+                db.add(pay)
                 
         await db.commit()
         print("Database seeding completed successfully.")

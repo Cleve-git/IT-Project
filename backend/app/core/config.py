@@ -1,6 +1,7 @@
+import os
 from pydantic_settings import BaseSettings
 from pydantic import Field
-from typing import List, Optional
+from typing import List
 
 class Settings(BaseSettings):
     DATABASE_URL: str = Field(
@@ -30,13 +31,4 @@ class Settings(BaseSettings):
         env_file_encoding = "utf-8"
         extra = "ignore"
 
-import os
-
-# Resolve env_file path dynamically to work both on host and inside Docker container
-_env_path = "c:\\Code\\IT-project\\backend\\.env"
-if not os.path.exists(_env_path):
-    _env_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".env"))
-    if not os.path.exists(_env_path):
-        _env_path = ".env"
-
-settings = Settings(_env_file=_env_path)
+settings = Settings(_env_file="c:\\Code\\IT-project\\backend\\.env")

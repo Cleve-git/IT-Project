@@ -1,52 +1,82 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/card';
 
 // Dynamically import Plotly with SSR disabled to prevent Node compilation errors
-const Plot = dynamic(() => import('react-plotly.js'), { 
+const Plot = dynamic(() => import('react-plotly.js'), {
   ssr: false,
-  loading: () => <div className="h-72 w-full flex items-center justify-center text-zinc-500">Loading charts library...</div>
+  loading: () => <div className="h-72 w-full flex items-center justify-center text-muted-foreground">Loading charts library...</div>
 });
 
 interface QueryVisualizerProps {
   config: Record<string, any>;
 }
 
+interface ChartTheme {
+  primary: string;
+  grid: string;
+  font: string;
+}
+
 export const QueryVisualizer: React.FC<QueryVisualizerProps> = ({ config }) => {
+  const [theme, setTheme] = useState<ChartTheme>({ primary: '#2563EB', grid: '#1e293b', font: '#94a3b8' });
+
+  useEffect(() => {
+    const read = () => {
+      const styles = getComputedStyle(document.documentElement);
+      const primary = styles.getPropertyValue('--primary').trim() || '#2563EB';
+      const isDark = document.documentElement.classList.contains('dark');
+      setTheme({
+        primary,
+        grid: isDark ? '#1e293b' : '#e2e8f0',
+        font: isDark ? '#94a3b8' : '#64748b',
+      });
+    };
+    read();
+    // Recolor live when the user toggles light/dark
+    const obs = new MutationObserver(read);
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => obs.disconnect();
+  }, []);
+
   if (!config) return null;
 
-  // Extend config layouts to fit the dark theme styles nicely
+  // Recolor each series to the active theme's primary colour
+  const data = (config.data || []).map((trace: Record<string, any>) => ({
+    ...trace,
+    marker: { ...(trace.marker || {}), color: theme.primary },
+    line: { ...(trace.line || {}), color: theme.primary },
+  }));
+
+  const axisStyle = {
+    gridcolor: theme.grid,
+    linecolor: theme.grid,
+    tickcolor: theme.grid,
+    automargin: true,
+  };
+
   const layout = {
     ...config.layout,
     autosize: true,
-    font: { color: '#94a3b8', family: 'Inter, sans-serif' },
+    font: { color: theme.font, family: 'Inter, sans-serif' },
     paper_bgcolor: 'rgba(0,0,0,0)',
     plot_bgcolor: 'rgba(0,0,0,0)',
-    xaxis: {
-      ...config.layout?.xaxis,
-      gridcolor: '#1e293b',
-      linecolor: '#334155',
-      tickcolor: '#334155',
-    },
-    yaxis: {
-      ...config.layout?.yaxis,
-      gridcolor: '#1e293b',
-      linecolor: '#334155',
-      tickcolor: '#334155',
-    },
+    margin: { t: 30, b: 90, l: 55, r: 20 },
+    xaxis: { ...config.layout?.xaxis, ...axisStyle, tickangle: -40 },
+    yaxis: { ...config.layout?.yaxis, ...axisStyle },
   };
 
   return (
-    <Card className="border-indigo-500/20 bg-indigo-950/5 mt-4">
-      <CardHeader className="py-4">
-        <CardTitle className="text-sm font-medium text-indigo-300">Data Visualization Preview</CardTitle>
+    <Card className="border-border/60 bg-muted/10 mt-4">
+      <CardHeader className="py-3">
+        <CardTitle className="text-sm font-medium text-foreground/80">Visualization</CardTitle>
       </CardHeader>
       <CardContent className="flex justify-center overflow-hidden">
         <div className="w-full max-w-4xl h-80">
           <Plot
-            data={config.data || []}
+            data={data}
             layout={layout}
             useResizeHandler={true}
             className="w-full h-full"

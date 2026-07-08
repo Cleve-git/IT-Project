@@ -6,6 +6,7 @@ import { Sparkles, Mail, Lock, Loader2, ArrowRight } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
 import { api } from '../../services/api';
 import { Button } from '../../components/ui/button';
+import ThemeToggle from '../../components/ui/ThemeToggle';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '../../components/ui/card';
 
 export default function LoginPage() {
@@ -55,14 +56,16 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-background relative overflow-hidden px-4">
+    <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden px-4">
       {/* Background soft ambient glows */}
       <div className="absolute top-1/4 left-1/4 h-96 w-96 rounded-full bg-primary/5 blur-3xl" />
       <div className="absolute bottom-1/4 right-1/4 h-96 w-96 rounded-full bg-indigo-500/5 blur-3xl" />
+
+      <ThemeToggle className="absolute top-4 right-4 z-20 h-9 w-9 rounded-lg flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer" />
       
       <div className="w-full max-w-md relative z-10">
         <form onSubmit={handleLogin}>
-          <Card className="border-border bg-card shadow-lg">
+          <Card className="border-border/60 bg-card shadow-xl">
             <CardHeader className="space-y-2 text-center pb-4">
               <div className="flex justify-center mb-1">
                 <div className="h-10 w-10 bg-primary/10 rounded-xl flex items-center justify-center shadow-sm">
@@ -91,7 +94,7 @@ export default function LoginPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="name@conda.ai"
-                    className="w-full bg-background border border-border rounded-lg py-2.5 pl-10 pr-4 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:border-primary transition-colors"
+                    className="w-full bg-background border border-border/60 rounded-xl py-2.5 pl-10 pr-4 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:border-primary focus:bg-muted/20 transition-colors"
                     required
                   />
                 </div>
@@ -106,7 +109,7 @@ export default function LoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full bg-background border border-border rounded-lg py-2.5 pl-10 pr-4 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:border-primary transition-colors"
+                    className="w-full bg-background border border-border/60 rounded-xl py-2.5 pl-10 pr-4 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:border-primary focus:bg-muted/20 transition-colors"
                     required
                   />
                 </div>
@@ -125,7 +128,7 @@ export default function LoginPage() {
                   <button
                     type="button"
                     onClick={() => handleQuickLogin('user')}
-                    className="py-2 px-3 bg-muted hover:bg-border/40 border border-border rounded-lg text-xs font-medium text-foreground transition-colors flex items-center justify-between cursor-pointer"
+                    className="py-2.5 px-3 bg-muted/40 hover:bg-muted border border-border/60 rounded-xl text-xs font-medium text-foreground transition-colors flex items-center justify-between cursor-pointer"
                   >
                     <span>User Sandbox</span>
                     <ArrowRight className="h-3 w-3 text-muted-foreground" />
@@ -133,7 +136,7 @@ export default function LoginPage() {
                   <button
                     type="button"
                     onClick={() => handleQuickLogin('admin')}
-                    className="py-2 px-3 bg-muted hover:bg-border/40 border border-border rounded-lg text-xs font-medium text-foreground transition-colors flex items-center justify-between cursor-pointer"
+                    className="py-2.5 px-3 bg-muted/40 hover:bg-muted border border-border/60 rounded-xl text-xs font-medium text-foreground transition-colors flex items-center justify-between cursor-pointer"
                   >
                     <span>Admin Sandbox</span>
                     <ArrowRight className="h-3 w-3 text-muted-foreground" />

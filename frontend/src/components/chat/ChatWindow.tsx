@@ -5,14 +5,13 @@ import { Send, Terminal, Loader2, ArrowRight, BookOpen, Mic, MicOff } from 'luci
 import { useChatStore } from '../../store/useChatStore';
 import api from '../../services/api';
 import ChatMessage from './ChatMessage';
-import SchemaExplorer from './SchemaExplorer';
 import { Button } from '../ui/button';
 
 const SUGGESTED_PROMPTS = [
   "Show total revenue by customer",
   "What is our best selling product?",
   "Calculate profit for all products",
-  "Which customers are top tier in NY?"
+  "List Gold tier customers in Jakarta"
 ];
 
 export const ChatWindow: React.FC = () => {
@@ -22,68 +21,65 @@ export const ChatWindow: React.FC = () => {
   } = useChatStore();
 
   const [input, setInput] = useState('');
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [listening, setListening] = useState(false);
+  const [speechSupported, setSpeechSupported] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  // Voice recognition states and refs
-  const [isListening, setIsListening] = useState(false);
-  const recognitionRef = useRef<any>(null);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-      if (SpeechRecognition) {
-        const rec = new SpeechRecognition();
-        rec.continuous = true;
-        rec.interimResults = true;
-        rec.lang = 'en-US';
-
-        rec.onresult = (event: any) => {
-          let fullTranscript = '';
-          for (let j = 0; j < event.results.length; ++j) {
-            fullTranscript += event.results[j][0].transcript;
-          }
-          if (fullTranscript.trim()) {
-            setInput(fullTranscript.trim());
-          }
-        };
-
-        rec.onerror = (event: any) => {
-          console.error("Speech recognition error", event.error);
-          setIsListening(false);
-        };
-
-        rec.onend = () => {
-          setIsListening(false);
-        };
-
-        recognitionRef.current = rec;
-      }
-    }
-  }, []);
-
-  const toggleListening = () => {
-    if (!recognitionRef.current) {
-      alert("Voice input is not supported in this browser. Please use Chrome, Edge, or Safari.");
-      return;
-    }
-
-    if (isListening) {
-      recognitionRef.current.stop();
-      setIsListening(false);
-    } else {
-      try {
-        recognitionRef.current.start();
-        setIsListening(true);
-      } catch (err) {
-        console.error("Failed to start speech recognition", err);
-      }
-    }
-  };
 
   // Scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
+
+  // Voice-to-text via the browser's Web Speech API (Chrome/Edge)
+  useEffect(() => {
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SR) return;
+    setSpeechSupported(true);
+    const rec = new SR();
+    rec.continuous = false;
+    rec.interimResults = true;
+    rec.lang = 'en-US';
+    rec.onresult = (e: any) => {
+      const transcript = Array.from(e.results).map((r: any) => r[0].transcript).join('');
+      setInput(transcript);
+    };
+    rec.onend = () => setListening(false);
+    rec.onerror = () => setListening(false);
+    recognitionRef.current = rec;
+    return () => { try { rec.abort(); } catch { /* ignore */ } };
+  }, []);
+
+  const toggleMic = () => {
+    const rec = recognitionRef.current;
+    if (!rec) return;
+    if (listening) {
+      rec.stop();
+      setListening(false);
+    } else {
+      setInput('');
+      try { rec.start(); setListening(true); } catch { /* already started */ }
+    }
+  };
+
+  // Load a conversation's message history whenever one is selected (or after a
+  // new chat is created). Selecting "New Chat" sets the id to null -> stays empty.
+  useEffect(() => {
+    if (!currentConversationId) return;
+    let cancelled = false;
+    setLoadingHistory(true);
+    (async () => {
+      try {
+        const history = await api.getMessages(currentConversationId);
+        if (!cancelled) setMessages(history);
+      } catch (err) {
+        console.error('Failed to load conversation messages', err);
+      } finally {
+        if (!cancelled) setLoadingHistory(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [currentConversationId, setMessages]);
 
   // Handle Submitting Query
   const handleSubmit = async (text: string) => {
@@ -134,36 +130,40 @@ export const ChatWindow: React.FC = () => {
   };
 
   return (
-    <div className="flex gap-6 items-start">
-      
-      {/* Center Dialogue Viewport */}
-      <div className="flex-1 flex flex-col justify-between bg-card rounded-[12px] border border-border shadow-sm overflow-hidden h-[calc(100vh-8rem)]">
+    <div className="flex">
+
+      {/* Center Dialogue Viewport — blends with the page background (no card frame) */}
+      <div className="flex-1 flex flex-col justify-between overflow-hidden h-[calc(100vh-8rem)]">
         
         {/* Messages Stream scroll container */}
         <div className="flex-1 overflow-y-auto p-6 scrollbar-thin">
-          {messages.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center max-w-xl mx-auto text-center space-y-6">
-              <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center">
-                <Terminal className="h-6 w-6 text-primary" />
+          {messages.length === 0 && loadingHistory ? (
+            <div className="h-full flex flex-col items-center justify-center text-center space-y-3">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              <span className="text-xs text-muted-foreground font-semibold">Loading conversation...</span>
+            </div>
+          ) : messages.length === 0 ? (
+            <div className="h-full flex flex-col items-center justify-center max-w-2xl mx-auto text-center px-4">
+              <div className="h-11 w-11 rounded-2xl bg-primary/10 flex items-center justify-center mb-6">
+                <Terminal className="h-5 w-5 text-primary" />
               </div>
-              <div className="space-y-2">
-                <h2 className="text-xl font-bold text-foreground tracking-tight">Conda AI Chat Analyst</h2>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  Query customer segments, analyze orders, or generate profit models using natural language. 
-                  Ask business questions and get compiled SQL executing directly on your database.
-                </p>
-              </div>
+              <h2 className="text-2xl font-semibold text-foreground tracking-tight mb-2.5">
+                What would you like to analyze?
+              </h2>
+              <p className="text-sm text-muted-foreground leading-relaxed mb-9 max-w-md">
+                Ask a business question in plain language — get the answer, the SQL, and a chart.
+              </p>
 
-              {/* Suggested Prompt Buttons */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full pt-4">
+              {/* Suggested prompts */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 w-full">
                 {SUGGESTED_PROMPTS.map((prompt) => (
                   <button
                     key={prompt}
                     onClick={() => handleSubmit(prompt)}
-                    className="p-3.5 text-left border border-border hover:border-primary/30 rounded-[8px] hover:bg-muted/40 text-xs text-muted-foreground hover:text-primary transition-all duration-150 ease-out cursor-pointer flex items-center justify-between group shadow-sm bg-card"
+                    className="group flex items-center gap-3 px-4 py-3 text-left rounded-xl border border-border/60 bg-muted/20 hover:bg-muted/50 hover:border-border text-sm text-foreground/90 transition-all duration-150 ease-out cursor-pointer"
                   >
-                    <span>{prompt}</span>
-                    <ArrowRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
+                    <span className="flex-1">{prompt}</span>
+                    <ArrowRight className="h-4 w-4 text-muted-foreground/50 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
                   </button>
                 ))}
               </div>
@@ -187,52 +187,34 @@ export const ChatWindow: React.FC = () => {
         </div>
 
         {/* Input Bar form */}
-        <div className="p-4 border-t border-border bg-muted/10">
-          <form 
-            onSubmit={(e) => { e.preventDefault(); handleSubmit(input); }} 
-            className="max-w-4xl mx-auto flex items-center space-x-3 bg-card rounded-lg border border-border px-4 py-2 shadow-sm focus-within:ring-2 focus-within:ring-primary/20 transition-all duration-150"
+        <div className="px-4 pb-4 pt-3">
+          <form
+            onSubmit={(e) => { e.preventDefault(); handleSubmit(input); }}
+            className="max-w-3xl mx-auto flex items-center gap-2 bg-muted/30 rounded-2xl border border-border px-3 py-2 shadow-sm focus-within:border-primary/40 focus-within:bg-card transition-all duration-150"
           >
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask a question about the business data... (e.g. List premium customers in Los Angeles)"
-              className="flex-1 bg-transparent border-none text-sm text-foreground placeholder-muted-foreground focus:outline-none py-2"
+              placeholder={listening ? 'Listening…' : 'Ask a question about the business data...'}
+              className="flex-1 bg-transparent border-none text-sm text-foreground placeholder-muted-foreground focus:outline-none px-2 py-1.5"
               disabled={isLoading}
             />
-            <button
-              type="button"
-              onClick={toggleListening}
-              disabled={isLoading}
-              className={`p-2 rounded-lg cursor-pointer hover:bg-muted transition-colors ${
-                isListening 
-                  ? 'text-danger bg-danger/10 animate-pulse' 
-                  : 'text-muted-foreground'
-              }`}
-              title={isListening ? "Stop voice input" : "Start voice input"}
-            >
-              {isListening ? <MicOff className="h-4.5 w-4.5" /> : <Mic className="h-4.5 w-4.5" />}
-            </button>
             <Button
               type="submit"
               size="sm"
               disabled={!input.trim() || isLoading}
-              className="px-3.5 py-2.5"
+              className="h-9 w-9 p-0 rounded-xl flex items-center justify-center shrink-0"
             >
               {isLoading ? <Loader2 className="h-4 w-4 animate-spin text-primary-foreground" /> : <Send className="h-4 w-4 text-primary-foreground" />}
             </Button>
           </form>
-          <div className="text-[10px] text-muted-foreground text-center mt-2 flex items-center justify-center space-x-1.5">
-            <BookOpen className="h-3 w-3 text-muted-foreground" />
-            <span>Only SELECT operations are permitted. Query modifications are blocked by safety guardrails.</span>
+          <div className="text-[10px] text-muted-foreground/70 text-center mt-2.5 flex items-center justify-center gap-1.5">
+            <BookOpen className="h-3 w-3" />
+            <span>Read-only — only SELECT queries are allowed, modifications are blocked.</span>
           </div>
         </div>
 
-      </div>
-
-      {/* Right Sidebar: Schema Explorer */}
-      <div className="w-80 overflow-y-auto hidden xl:block sticky top-0 h-[calc(100vh-8rem)]">
-        <SchemaExplorer />
       </div>
 
     </div>

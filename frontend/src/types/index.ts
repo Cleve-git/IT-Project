@@ -34,6 +34,11 @@ export interface Message {
   sql?: string | null;
   results?: Record<string, any>[] | null;
   visualization?: Record<string, any> | null;
+  references?: {
+    tables: { table: string; description: string }[];
+    row_count: number;
+    source: string;
+  } | null;
 }
 
 export interface QueryLog {
@@ -83,5 +88,6 @@ export interface BenchmarkResult {
   is_correct: boolean;
   execution_time_ms: number | null;
   error_message: string | null;
+  category: string | null;
   created_at: string;
 }

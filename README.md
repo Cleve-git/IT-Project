@@ -4,6 +4,21 @@ A production-ready monorepo web application that translates natural language que
 
 ---
 
+## Project 3 Deliverables — Where to Find Each
+
+This project implements **Project 3: Conversational Data Analyst** end to end. Mapping of each required deliverable to its implementation:
+
+| # | Deliverable | Implementation |
+|---|---|---|
+| 1 | Schema-aware, **read-only** NL→SQL agent | `backend/app/application/services/analyst_service.py` (`generate_sql`, `check_sql_safety` — blocks all write/DDL) |
+| 2 | Execute → answer + **auto chart** + **explanation** | `analyst_service.py` (`execute_sql`, `generate_plotly_config`, `generate_explanation`); rendered by `frontend/.../chat/QueryVisualizer.tsx` |
+| 3 | **Clarifying questions + multi-turn** follow-ups | `chat.py` + `infrastructure/repositories/context_repository.py` + `ConversationContext` model (persists the pending clarification, merges the user's next answer) |
+| 4 | Query log + **"show the SQL"** transparency | `query_logs` table, `LogViewer.tsx`, and the SQL tab in `QueryVisualizer.tsx` |
+| 5 | **Execution-accuracy** evaluation (50+ benchmark questions) | `backend/app/application/benchmarks/benchmark_suite.py` (52 gold Qs) + `POST /api/v1/admin/benchmarks/run`; Admin → Benchmarking tab. See *Evaluation* below. |
+| 6 | **Business case** for self-service analytics | `docs/business_case.md` |
+
+---
+
 ## Technical Stack
 
 - **Frontend**: Next.js 15 (App Router), TypeScript, Tailwind CSS v4, shadcn/ui components, Zustand, TanStack Query, Plotly.js.
@@ -125,6 +140,30 @@ Once docker-compose is healthy:
 To secure execution, the backend Analyst Service implements a two-stage filter:
 1. **Keyword Sanitization**: Disallows any operations containing modifying SQL keywords (`INSERT`, `UPDATE`, `DELETE`, `DROP`, `ALTER`, `CREATE`, `TRUNCATE`).
 2. **Statement Constraint**: Verifies using regex syntax filters that statements strictly begin with `SELECT` or `WITH`.
+
+---
+
+## Evaluation: Execution-Accuracy Benchmark
+
+The NL→SQL agent is evaluated against a **golden dataset of 52 natural-language questions** (`backend/app/application/benchmarks/benchmark_suite.py`), each paired with a hand-written gold SQL answer and grouped into categories (aggregation, filtering, grouping, joins, ranking, time, calculation).
+
+The metric is **execution accuracy**, the standard for text-to-SQL: for every question the system executes *both* the agent-generated SQL and the gold SQL against the live database, then compares the two **result sets**. A case counts as correct only when the generated query returns the same data as the gold answer. The comparison is order- and alias-insensitive (treats each result as a multiset of normalized rows), so harmless phrasing differences don't cause false negatives, while a query that computes the wrong thing is caught.
+
+Run it from the **Admin Panel → Benchmarking** tab, or directly:
+
+```bash
+# Full suite
+curl -X POST http://localhost:8000/api/v1/admin/benchmarks/run
+
+# Optional: one category, or cap the count (useful to avoid LLM rate limits)
+curl -X POST "http://localhost:8000/api/v1/admin/benchmarks/run?category=joins"
+curl -X POST "http://localhost:8000/api/v1/admin/benchmarks/run?sample=10"
+```
+
+The response (and the admin UI) reports overall accuracy, per-category accuracy, mean compile latency, and the failure reason for each missed case (ambiguous, guardrail-blocked, execution error, or result mismatch).
+
+> [!NOTE]
+> The benchmark exercises the **real LLM** path. Running it in offline Mock Sandbox mode will score low, because the mock generator only recognizes a handful of query patterns — set a valid `GROQ_API_KEY` for a representative score.
 
 ---
 
