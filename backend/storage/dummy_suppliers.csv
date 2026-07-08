@@ -1,0 +1,16 @@
+supplier_id,supplier_name,category,city,contact_email,products_supplied,rating,active
+SUP-001,Sentosa Elektronik,Electronics,Jakarta,sales@sentosa.co.id,42,4.7,yes
+SUP-002,Batik Nusantara,Fashion,Yogyakarta,order@batiknusantara.id,88,4.9,yes
+SUP-003,Dapur Sehat,Grocery,Surabaya,cs@dapursehat.co.id,120,4.3,yes
+SUP-004,Rumah Furnitur,Home,Bandung,info@rumahfurnitur.id,35,4.1,yes
+SUP-005,Sport Prima,Sports,Medan,hello@sportprima.co.id,54,4.6,no
+SUP-006,Cantik Beauty,Beauty,Semarang,sales@cantikbeauty.id,67,4.8,yes
+SUP-007,Kantor Lengkap,Office,Bekasi,order@kantorlengkap.co.id,29,3.9,yes
+SUP-008,Mainan Ceria,Toys,Depok,cs@mainanceria.id,73,4.4,yes
+SUP-009,Gadget Hub,Electronics,Jakarta,support@gadgethub.co.id,95,4.5,yes
+SUP-010,Mode Kekinian,Fashion,Makassar,sales@modekekinian.id,61,4.2,no
+SUP-011,Fresh Market,Grocery,Bandung,cs@freshmarket.co.id,140,4.7,yes
+SUP-012,Interior Plus,Home,Jakarta,info@interiorplus.id,48,4.0,yes
+SUP-013,Athletic Store,Sports,Surabaya,order@athleticstore.id,52,4.6,yes
+SUP-014,Glow Cosmetics,Beauty,Bekasi,hello@glowcosmetics.co.id,80,4.9,yes
+SUP-015,Office Central,Office,Semarang,sales@officecentral.id,33,3.8,no

@@ -57,6 +57,7 @@ Rules:
 2. Return no explanation.
 3. Return no JSON.
 4. Return no punctuation.
+
 """
 
 # Keywords lists for fallback checks
