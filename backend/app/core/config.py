@@ -1,7 +1,7 @@
 import os
 from pydantic_settings import BaseSettings
 from pydantic import Field
-from typing import List
+from typing import List, Optional
 
 class Settings(BaseSettings):
     DATABASE_URL: str = Field(
@@ -31,4 +31,7 @@ class Settings(BaseSettings):
         env_file_encoding = "utf-8"
         extra = "ignore"
 
-settings = Settings(_env_file="c:\\Code\\IT-project\\backend\\.env")
+# Resolve the path to the .env file dynamically
+current_dir = os.path.dirname(os.path.abspath(__file__))
+env_file_path = os.path.abspath(os.path.join(current_dir, "..", "..", ".env"))
+settings = Settings(_env_file=env_file_path)

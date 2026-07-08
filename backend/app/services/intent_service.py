@@ -2,6 +2,7 @@ import re
 from typing import Optional
 from langchain.schema import HumanMessage, SystemMessage
 from app.core.config import settings
+from app.services.llm_service import LlmService
 
 INTENT_SYSTEM_PROMPT = """You are an Intent Classification Engine for a Conversational Data Analyst application.
 
@@ -13,8 +14,15 @@ Your job is to classify the user's message into exactly ONE of the following lab
 - EXPLAIN_SQL
 - VISUALIZATION_REQUEST
 - EXPORT_REQUEST
+- OUT_OF_SCOPE
 
 Definitions:
+
+OUT_OF_SCOPE:
+Questions that are NOT about the company's business data and are NOT greetings,
+small talk, or help — e.g. general/world knowledge, facts, math, coding help,
+or anything unrelated to customers, products, orders, payments.
+Examples: "what is the capital of France?", "who won the world cup?", "write me a poem", "what is 2+2?"
 
 GREETING:
 Greetings and salutations.
@@ -52,10 +60,24 @@ Rules:
 """
 
 # Keywords lists for fallback checks
-ANALYTICAL_KEYWORDS = {
-    "show", "list", "count", "total", "revenue", "sales", "average", "top",
-    "customer", "order", "product", "profit", "payment", "selling", "revenue", "cost"
+DATA_QUERY_KEYWORDS = {
+    # Schema words (singular and plural)
+    "customer", "customers", "product", "products", "order", "orders", 
+    "payment", "payments", "order_item", "order_items", "customer_id", 
+    "name", "city", "tier", "product_name", "category", "order_total", 
+    "order_date", "status", "amount", "method", "quantity", "line_total",
+    "cost", "unit_price", "price",
+    # Data keywords
+    "show", "list", "count", "total", "average", "sum", "top", 
+    "best", "highest", "lowest", "revenue", "sales", "profit", 
+    "compare", "trend", "growth", "report", "statistics", "analytics", 
+    "dashboard", "monthly", "yearly", "selling",
+    # Cities
+    "surabaya", "jakarta", "new york", "chicago", "los angeles", 
+    "houston", "san francisco", "ny", "la", "boston", "seattle"
 }
+
+DATA_QUERY_PHRASES = ["how many", "group by", "average order value", "order total", "order date"]
 
 GREETING_KEYWORDS = {"hello", "hi", "hey", "good morning", "good afternoon", "good evening", "halo"}
 SMALL_TALK_KEYWORDS = {"how are you", "thank you", "thanks", "who are you", "nice to meet you", "howdy", "apa kabar"}
@@ -63,25 +85,24 @@ HELP_KEYWORDS = {"help", "what can you do", "how to use", "capabilities", "guide
 
 class IntentService:
     def __init__(self):
-        # Use llama-3-8b-8192 for fast lightweight classification
-        if settings.GROQ_API_KEY != "mock-groq-key" and len(settings.GROQ_API_KEY) > 10:
-            self.llm = ChatGroq(
-                model="llama-3-8b-8192",
-                groq_api_key=settings.GROQ_API_KEY,
-                temperature=0.0
-            )
-            self.is_mock = False
-        else:
-            self.is_mock = True
+        self.llm = LlmService()
 
-    def detect_intent_fallback(self, message: str) -> str:
-        """Local rule-based heuristic classification when Groq is offline or mock."""
+    async def detect_intent(self, message: str, provider: Optional[str] = None, model: Optional[str] = None) -> str:
+        """Classifies the user message into one of the supported categories:
+        GREETING, SMALL_TALK, HELP, DATA_QUERY, EXPLAIN_SQL, VISUALIZATION_REQUEST, EXPORT_REQUEST, OUT_OF_SCOPE.
+        """
+        if not message or not message.strip():
+            return "SMALL_TALK"
+
         msg_clean = re.sub(r'[^\w\s]', '', message.lower()).strip()
         tokens = set(msg_clean.split())
 
         # Check analytical keywords first to capture data queries
         for token in tokens:
-            if token in ANALYTICAL_KEYWORDS:
+            if token in DATA_QUERY_KEYWORDS:
+                return "DATA_QUERY"
+        for phrase in DATA_QUERY_PHRASES:
+            if phrase in msg_clean:
                 return "DATA_QUERY"
 
         # Check exact phrases
@@ -98,9 +119,9 @@ class IntentService:
         # Check token sets
         if tokens.intersection(GREETING_KEYWORDS):
             return "GREETING"
-        if self.looks_like_help(message):
+        if tokens.intersection(HELP_KEYWORDS):
             return "HELP"
-        if self.looks_like_small_talk(message):
+        if tokens.intersection(SMALL_TALK_KEYWORDS):
             return "SMALL_TALK"
 
         # LLM fallback
@@ -117,8 +138,8 @@ class IntentService:
             label = re.sub(r'[^\w_]', '', raw.strip().upper())
             
             valid_labels = {
-                "GREETING", "SMALL_TALK", "HELP", "DATA_QUERY", 
-                "EXPLAIN_SQL", "VISUALIZATION_REQUEST", "EXPORT_REQUEST"
+                "GREETING", "SMALL_TALK", "HELP", "DATA_QUERY",
+                "EXPLAIN_SQL", "VISUALIZATION_REQUEST", "EXPORT_REQUEST", "OUT_OF_SCOPE"
             }
             
             if label in valid_labels:
