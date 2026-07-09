@@ -67,16 +67,14 @@ export default function LoginPage() {
       
       <div className="w-full max-w-md relative z-10">
         <form onSubmit={handleLogin}>
-          <Card className="border-border/60 bg-card shadow-xl">
+          <Card className="border-border/60 bg-white/40 dark:bg-[#0B1329]/60 backdrop-blur-lg shadow-xl">
             <CardHeader className="space-y-2 text-center pb-4">
               <div className="flex justify-center mb-1">
-                <div className="h-10 w-10 bg-primary/10 rounded-xl flex items-center justify-center shadow-sm">
-                  <Sparkles className="h-5 w-5 text-primary" />
-                </div>
+                <img src="/logo/CondaAI.png" alt="Conda AI logo" className="h-8 w-8 rounded-xl shadow-sm dark:invert dark:brightness-200" />
               </div>
               <CardTitle className="text-xl font-bold tracking-tight text-foreground">Conda AI</CardTitle>
               <CardDescription className="text-xs text-muted-foreground">
-                Natural language interface to compile PostgreSQL queries
+                Natural language interface to compile SQL queries
               </CardDescription>
             </CardHeader>
             
@@ -130,7 +128,7 @@ export default function LoginPage() {
                   <button
                     type="button"
                     onClick={() => handleQuickLogin('user')}
-                    className="py-2.5 px-3 bg-muted/40 hover:bg-muted border border-border/60 rounded-xl text-xs font-medium text-foreground transition-colors flex items-center justify-between cursor-pointer"
+                    className="py-2.5 px-3 bg-blue-100/10 hover:bg-blue-200/20 border border-border/60 rounded-xl text-xs font-medium text-foreground transition-colors flex items-center justify-between cursor-pointer"
                   >
                     <span>User Sandbox</span>
                     <ArrowRight className="h-3 w-3 text-muted-foreground" />
@@ -138,7 +136,7 @@ export default function LoginPage() {
                   <button
                     type="button"
                     onClick={() => handleQuickLogin('admin')}
-                    className="py-2.5 px-3 bg-muted/40 hover:bg-muted border border-border/60 rounded-xl text-xs font-medium text-foreground transition-colors flex items-center justify-between cursor-pointer"
+                    className="py-2.5 px-3 bg-blue-100/10 hover:bg-blue-200/20 border border-border/60 rounded-xl text-xs font-medium text-foreground transition-colors flex items-center justify-between cursor-pointer"
                   >
                     <span>Admin Sandbox</span>
                     <ArrowRight className="h-3 w-3 text-muted-foreground" />
