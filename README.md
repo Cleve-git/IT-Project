@@ -1,189 +1,197 @@
-# Conversational Data Analyst
+# Conda AI — Conversational Data Analyst
 
-A production-ready monorepo web application that translates natural language questions into secure PostgreSQL queries, executes them securely, visualizes the result sets dynamically with Plotly.js charts, generates plain-text business summaries using LLMs, and extracts tabular layouts from uploaded PDFs/CSVs.
+Conda AI is a production-ready, self-service enterprise analytics portal built on a Next.js frontend and a FastAPI backend. It allows non-technical business teams to query their PostgreSQL database in plain language, automatically compile SQL, execute queries securely, render visualizations, summarize findings, and ingest documents.
 
----
-
-## Project 3 Deliverables — Where to Find Each
-
-This project implements **Project 3: Conversational Data Analyst** end to end. Mapping of each required deliverable to its implementation:
-
-| # | Deliverable | Implementation |
-|---|---|---|
-| 1 | Schema-aware, **read-only** NL→SQL agent | `backend/app/application/services/analyst_service.py` (`generate_sql`, `check_sql_safety` — blocks all write/DDL) |
-| 2 | Execute → answer + **auto chart** + **explanation** | `analyst_service.py` (`execute_sql`, `generate_plotly_config`, `generate_explanation`); rendered by `frontend/.../chat/QueryVisualizer.tsx` |
-| 3 | **Clarifying questions + multi-turn** follow-ups | `chat.py` + `infrastructure/repositories/context_repository.py` + `ConversationContext` model (persists the pending clarification, merges the user's next answer) |
-| 4 | Query log + **"show the SQL"** transparency | `query_logs` table, `LogViewer.tsx`, and the SQL tab in `QueryVisualizer.tsx` |
-| 5 | **Execution-accuracy** evaluation (50+ benchmark questions) | `backend/app/application/benchmarks/benchmark_suite.py` (52 gold Qs) + `POST /api/v1/admin/benchmarks/run`; Admin → Benchmarking tab. See *Evaluation* below. |
-| 6 | **Business case** for self-service analytics | `docs/business_case.md` |
+The system is deployed using `openai/gpt-oss-120b` via the Groq API cloud service (or falls back to mock sandbox engines for local offline development).
 
 ---
 
-## Technical Stack
+## 🌟 Project Highlights & Core Features
 
-- **Frontend**: Next.js 15 (App Router), TypeScript, Tailwind CSS v4, shadcn/ui components, Zustand, TanStack Query, Plotly.js.
-- **Backend**: FastAPI, SQLAlchemy (Asyncpg), Pydantic v2, Alembic, LangChain, LangChain-Groq.
-- **Database**: Supabase PostgreSQL (compatible with standard PostgreSQL instances).
-- **Authentication**: Supabase Auth (integrated with Local JWT decryption and Role-Based Access Controls).
-- **AI Provider**: Groq API (Defaulting to `llama-3.3-70b-versatile` for SQL and `llama-3-8b-8192` for explanations).
-- **Deployment**: Frontend -> Vercel | Backend -> Railway | Database -> Supabase.
+*   **Read-Only SQL Agent**: Schema-aware text-to-SQL compiler that automatically detects join relationships, groupings, and filters, while strictly blocking modifying statements (`INSERT`, `UPDATE`, `DELETE`, etc.) via two-stage regex safety filters.
+*   **Contextual Multi-Turn Conversation**: Supports slot-filling, follow-up query editing, and multi-turn clarifying questions (disambiguates questions like *"revenue from completed orders"* before compiling SQL).
+*   **Automatic Visualization & Insights**: Recommends appropriate Plotly.js charts based on output schemas, displaying tabular grids alongside plain-language business explanations.
+*   **Audit Logging & Transparency**: Persists audit logs of query statements, database executions, LLM token usages, and timing metrics, complete with an interactive admin **Log Viewer** and PDF/CSV exporter.
+*   **Evaluation Performance Matrix Dashboard**:
+    *   **KPI Scorecard Grid**: Live monitors overall Execution Accuracy %, SQL Syntax Success Rate %, Average Latency (s), and Token Consumption Cost.
+    *   **Interactive Trend Visualizers**: Renders latency trends over time and query outcome distribution donut charts dynamically utilizing the project's custom theme-based Plotly.js layout recoloring.
+    *   **20-Question Golden Test Suite**: An interactive test runner that executes 15 analytical database queries and 5 out-of-scope validation prompts to calculate real-time compiler accuracy drift.
+*   **Document Ingestion**: Extracts tabular data layouts from uploaded PDFs/CSVs to seed database structures.
 
 ---
 
-## Monorepo Directory Mapping
+## 🏗️ System Architecture & Database Schema
+
+The backend uses SQLAlchemy ORM to manage **14 database tables** partitioned into sales context data and system operational records. 
+
+### Database Schema (ERD Overview)
+A full entity relationship model is documented at [docs/erd.md](file:///c:/Code/conda-ai/IT-Project/docs/erd.md).
+*   **Core Business Tables**: `customers`, `products`, `orders`, `payments`, and `order_items`.
+*   **Application System Tables**: `profiles` (linked to Supabase user UUIDs), `conversations`, `messages`, `query_logs` (storing LLM latency/tokens), `benchmark_results`, `feedback`, `uploaded_documents`, `extracted_tables`, and `document_chunks`.
+
+### Core System Flows
+Complete system interaction sequence diagrams are documented at [docs/sequence_diagrams.md](file:///c:/Code/conda-ai/IT-Project/docs/sequence_diagrams.md).
+
+#### 1. Authentication & Profile Sync Flow
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as Client Browser
+    participant FE as Next.js Frontend
+    participant SB as Supabase Auth
+    participant BE as FastAPI Backend
+    participant DB as PostgreSQL DB
+
+    User->>FE: Enters credentials / Signs In
+    FE->>SB: Calls signInWithPassword()
+    SB-->>FE: Returns session (User details, JWT token)
+    FE->>BE: POST /api/v1/auth/sync (JWT in Auth Header)
+    Note over BE: security.py decodes JWT<br/>verifies signature locally
+    BE->>DB: Check if Profile exists for sub (UUID)
+    alt Profile does not exist
+        BE->>DB: INSERT into profiles (id, email, role: 'user')
+    else Profile exists
+        BE->>DB: UPDATE profiles (email, full_name)
+    end
+    DB-->>BE: Confirm profile state
+    BE-->>FE: Return Profile JSON (e.g. role: 'admin')
+    FE->>User: Route into Workspace / Dashboard
+```
+
+#### 2. Chat Processing & Metrics Logging Flow
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as Business User
+    participant FE as Next.js Workspace
+    participant BE as FastAPI Backend
+    participant LLM as Groq LLM API
+    participant DB as PostgreSQL DB
+
+    User->>FE: Submits question ("Total sales in Jakarta")
+    FE->>BE: POST /api/v1/chat/query
+    Note over BE: Detects intent (DATA_QUERY)<br/>Starts latency timer
+    BE->>LLM: Requests SQL compilation for schema
+    LLM-->>BE: Returns SQL JSON output
+    Note over BE: Verifies SELECT/WITH safety constraints
+    BE->>DB: Executes compiled SQL against database
+    DB-->>BE: Returns data table rows
+    BE->>LLM: Requests narrative explanation
+    LLM-->>BE: Returns natural language paragraph
+    Note over BE: Accumulates latency and token counts
+    BE->>DB: INSERT into query_logs (status, SQL, duration, tokens, llm_latency)
+    BE-->>FE: Returns response message payload (table, explanation, Plotly config)
+    FE->>User: Renders answers, charts, and SQL tab
+```
+
+---
+
+## 📁 Directory Structure Mapping
 
 ```
 conversational-data-analyst/
 ├── backend/
 │   ├── app/
-│   │   ├── api/             # Routes schemas (DTOs) and v1 endpoint controllers
-│   │   ├── application/     # Services: SQL generator, Document parser
-│   │   ├── core/            # Security JWT verification, DB engine, Seeder config
-│   │   ├── domain/          # Declarative models (all 14 tables)
-│   │   └── infrastructure/  # Repositories for Profiles, Chats, Docs
-│   ├── alembic/             # Database migration environments
+│   │   ├── api/             # HTTP Route schemas, V1 admin controllers, and endpoint routers
+│   │   ├── application/     # Core services: NL-to-SQL compiler, PDF/CSV parser, benchmarks
+│   │   ├── core/            # Database engine, JWT verification, seeder configs
+│   │   ├── domain/          # Database ORM models (QueryLog table updates)
+│   │   └── infrastructure/  # Repositories (Profiles, Messages, QueryLogs)
+│   ├── alembic/             # DB schema migration configurations
 │   ├── Dockerfile
 │   └── requirements.txt
 ├── frontend/
 │   ├── src/
-│   │   ├── app/             # Next.js App Router (login, dashboard, admin panel)
-│   │   ├── components/      # UI components (charts, schema explorer, grids)
-│   │   ├── services/        # API client fetches
-│   │   ├── store/           # Zustand states
-│   │   └── types/           # TypeScript contracts
+│   │   ├── app/             # Next.js pages (landing, login, workspace, admin panel)
+│   │   ├── components/      # UI components (theme toggles, custom cards, tables)
+│   │   │   ├── admin/       # EvaluationMatrix dashboard, LogViewer, BenchmarkRunner
+│   │   │   └── chat/        # Message bubble, QueryVisualizer Plotly container
+│   │   ├── services/        # ApiService fetch configurations
+│   │   ├── store/           # Zustand global state (Auth status)
+│   │   └── types/           # TypeScript interfaces and contracts
 │   ├── Dockerfile
 │   └── package.json
 ├── docs/
-│   ├── erd.md               # Mermaid Entity-Relationship Diagram
-│   └── sequence_diagrams.md # Mermaid Sequence Diagrams
-├── docker-compose.yml       # Local database, backend, frontend orchestration
-└── README.md
+│   ├── erd.md               # Detailed database Entity-Relationship documentation
+│   ├── sequence_diagrams.md # Runtime message flow visualization
+│   ├── business_case.md     # democratized self-service business case and ROI analysis
+│   └── HOW-TO-RUN.md        # Comprehensive local running guide
+└── docker-compose.yml       # Monorepo container stack orchestrations
 ```
 
 ---
 
-## Database Tables
+## 🚀 Getting Started & Local Running
 
-The project implements **14 database tables** split into two categories:
+For a complete step-by-step developer environment setup, refer to [docs/HOW-TO-RUN.md](file:///c:/Code/conda-ai/IT-Project/docs/HOW-TO-RUN.md).
 
-### Core Business Tables (Sales Context)
-- `customers`: ID, Name, City, Tier (Premium, Standard, Basic), Created At
-- `products`: ID, Name, Category, Unit Price, cost
-- `orders`: ID, Customer ID, Date, Status (Completed, Pending, Cancelled), Total
-- `payments`: ID, Order ID, Amount, Method, Paid Date, Status (Success, Pending, Failed)
-- `order_items`: ID, Order ID, Product ID, Quantity, Unit Price, Line Total
+### Quickstart (TL;DR)
 
-### Application System Tables
-- `profiles`: Synced user entries linked to Supabase authentication UUIDs (RBAC roles: `admin`/`user`)
-- `conversations`: Chat sessions titles and date properties
-- `messages`: Indivual entries containing NL prompt, compiled SQL, raw results, Plotly chart specs, and plain language explanations
-- `query_logs`: Complete execution audit history (timings, compile success indicators, errors)
-- `benchmark_results`: Performance analytics metrics comparing compiled outputs to golden statements
-- `feedback`: User thumbs-up/down ratings and comment inputs on query responses
-- `uploaded_documents`: PDF/CSV file uploads registry and status tracking
-- `extracted_tables`: Relational representations extracted from unstructured files
-- `document_chunks`: Document text partitions mapped with mock embedding vectors
+1.  **Configure Backend `.env`**:
+    Inside the `backend/` folder, create `.env` containing:
+    ```env
+    DATABASE_URL=postgresql+asyncpg://postgres.<ref>:<password>@aws-1-<region>.pooler.supabase.com:5432/postgres
+    DATABASE_SYNC_URL=postgresql://postgres.<ref>:<password>@aws-1-<region>.pooler.supabase.com:5432/postgres
+    GROQ_API_KEY=your_groq_api_key_here
+    SUPABASE_URL=https://<your-project>.supabase.co
+    SUPABASE_ANON_KEY=<your-anon-key>
+    SUPABASE_JWT_SECRET=<your-jwt-secret>
+    ENVIRONMENT=development
+    SQL_GENERATION_MODEL=openai/gpt-oss-120b
+    EXPLANATION_MODEL=openai/gpt-oss-120b
+    ```
+
+    > [!TIP]
+    > If `GROQ_API_KEY` is set to `mock-groq-key` or left as empty, Conda AI automatically initiates **Mock Sandbox Engine mode**. This mock environment allows full offline navigation, chat simulations, and dashboard reviews without calling external API keys!
+
+2.  **Boot the Services**:
+    Open two terminals and execute:
+
+    *   **Terminal 1 — Backend**:
+        ```bash
+        cd backend
+        python -m venv .venv
+        source .venv/bin/activate # macOS/Linux or .\.venv\Scripts\activate on Windows
+        pip install -r requirements.txt
+        python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+        ```
+
+    *   **Terminal 2 — Frontend**:
+        ```bash
+        cd frontend
+        npm install
+        npm run dev
+        ```
+
+3.  **Explore the App**:
+    *   Open `http://localhost:3000`.
+    *   Click **Admin Sandbox** shortcut to log in immediately as `admin@cda.com` with role-based policies.
+    *   Go to **Admin Panel** in the top-right corner to access the **Evaluation Matrix** dashboard tab.
 
 ---
 
-## Local Development & Setup
+## 📈 Evaluation & Diagnostics
 
-Follow these steps to run the complete workspace locally.
+### 1. Logs Audit & Export
+The system logs every query. Administrators can audit these in **Admin Panel → Execution Logs**, and export the data as a formatted **CSV** or **PDF report** via server-side generation.
 
-### 1. Configure Environment Variables
-
-Create a file named `.env` inside the `backend/` folder:
-
-```env
-DATABASE_URL=postgresql+asyncpg://postgres:password@localhost:5432/conversational_analyst
-DATABASE_SYNC_URL=postgresql://postgres:password@localhost:5432/conversational_analyst
-GROQ_API_KEY=your-actual-groq-api-key-here
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_ANON_KEY=your-supabase-anon-key
-SUPABASE_JWT_SECRET=your-supabase-jwt-secret-for-token-decoding
-ENVIRONMENT=development
-SQL_GENERATION_MODEL=llama-3.3-70b-versatile
-EXPLANATION_MODEL=llama-3-8b-8192
-```
-
-> [!TIP]
-> If you do not have a Groq API Key or Supabase URL configured yet, you can leave the default values unchanged in `docker-compose.yml`. The system will automatically fall back to **Mock Sandbox Engines**, permitting complete offline testing and reviews!
-
----
-
-### 2. Run via Docker Compose (Recommended)
-
-Start the entire monorepo stack with a single command from the root directory:
-
+### 2. Golden Dataset Benchmarking
+Administrators can run the Text-to-SQL compiler benchmark in the **Diagnostics** tab or test it via HTTP:
 ```bash
-docker-compose up --build
+curl -X POST http://localhost:8000/api/v1/admin/benchmarks/run?sample=10
 ```
 
-This launches three containers:
-1. `cda-postgres` at `localhost:5432` (Auto-creates the 14 tables and **seeds them with mock customers, products, orders, payments, and profiles**)
-2. `cda-backend` at `localhost:8000` (FastAPI server, documentation available at `http://localhost:8000/docs`)
-3. `cda-frontend` at `localhost:3000` (Next.js 15 App router workspace)
+### 3. Real-Time Model Performance & Test Suite
+The newly implemented **Evaluation Matrix** tab in the Admin dashboard queries database aggregations to compute real-time compiler accuracy and displays:
+*   **Average Latency trends** and **Query Outcome distributions** plotted using custom Plotly.js layouts.
+*   **Golden Test Suite runner**: Hits `/api/v1/admin/evaluation/test-suite` running a 20-prompt validation test suite (including out-of-scope prompts) to verify intent detection, safety blockers, and execution data matching.
 
 ---
 
-### 3. Immediate Login Sandboxes
+## 📄 Business Case & ROI Value
 
-Once docker-compose is healthy:
-1. Navigate to the login screen: `http://localhost:3000`
-2. Click the **User Sandbox** shortcut to log in instantly as a Business Analyst (`user@cda.com`).
-3. Click the **Admin Sandbox** shortcut to log in instantly as a System Administrator (`admin@cda.com`).
+ Democratizing data access within the company offers quantifiable ROI:
+*   **Analyst Overhead Reduction**: Reclaims up to 3+ hours per analyst daily by shifting repetitive ad-hoc data pulls to read-only automated self-service query.
+*   **Accelerated Decision Making**: Decoupled database reporting turns multi-day analytics ticket waiting times into a 5-second plain-text visual response.
 
----
-
-## SQL Guardrails & Security Policies
-
-To secure execution, the backend Analyst Service implements a two-stage filter:
-1. **Keyword Sanitization**: Disallows any operations containing modifying SQL keywords (`INSERT`, `UPDATE`, `DELETE`, `DROP`, `ALTER`, `CREATE`, `TRUNCATE`).
-2. **Statement Constraint**: Verifies using regex syntax filters that statements strictly begin with `SELECT` or `WITH`.
-
----
-
-## Evaluation: Execution-Accuracy Benchmark
-
-The NL→SQL agent is evaluated against a **golden dataset of 52 natural-language questions** (`backend/app/application/benchmarks/benchmark_suite.py`), each paired with a hand-written gold SQL answer and grouped into categories (aggregation, filtering, grouping, joins, ranking, time, calculation).
-
-The metric is **execution accuracy**, the standard for text-to-SQL: for every question the system executes *both* the agent-generated SQL and the gold SQL against the live database, then compares the two **result sets**. A case counts as correct only when the generated query returns the same data as the gold answer. The comparison is order- and alias-insensitive (treats each result as a multiset of normalized rows), so harmless phrasing differences don't cause false negatives, while a query that computes the wrong thing is caught.
-
-Run it from the **Admin Panel → Benchmarking** tab, or directly:
-
-```bash
-# Full suite
-curl -X POST http://localhost:8000/api/v1/admin/benchmarks/run
-
-# Optional: one category, or cap the count (useful to avoid LLM rate limits)
-curl -X POST "http://localhost:8000/api/v1/admin/benchmarks/run?category=joins"
-curl -X POST "http://localhost:8000/api/v1/admin/benchmarks/run?sample=10"
-```
-
-The response (and the admin UI) reports overall accuracy, per-category accuracy, mean compile latency, and the failure reason for each missed case (ambiguous, guardrail-blocked, execution error, or result mismatch).
-
-> [!NOTE]
-> The benchmark exercises the **real LLM** path. Running it in offline Mock Sandbox mode will score low, because the mock generator only recognizes a handful of query patterns — set a valid `GROQ_API_KEY` for a representative score.
-
----
-
-## platform deployment Guides
-
-### Database Setup
-1. Create a PostgreSQL project on [Supabase](https://supabase.com).
-2. Grab the transaction connection string and set it in your environment variables as `DATABASE_URL` (with `postgresql+asyncpg://` schema).
-
-### Backend Deployment (Railway)
-1. Link your GitHub repository to [Railway](https://railway.app).
-2. Create a new service from the repository and point the path to `/backend`.
-3. Add the required environment variables in the variables tab.
-4. Set the start command to `uvicorn app.main:app --host 0.0.0.0 --port $PORT`.
-
-### Frontend Deployment (Vercel)
-1. Import your repository into [Vercel](https://vercel.com).
-2. Set the root directory configuration to `frontend`.
-3. Configure Environment Variables:
-   - `NEXT_PUBLIC_API_URL`: Your deployed FastAPI backend URL.
-   - `NEXT_PUBLIC_SUPABASE_URL`: Your Supabase Project API URL.
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Your Supabase Anon Key.
-4. Deploy.
+Read the complete business analysis and pricing models at [docs/business_case.md](file:///c:/Code/conda-ai/IT-Project/docs/business_case.md).
