@@ -36,22 +36,20 @@ export default function RegisterPage() {
     <div className="min-h-screen w-full flex items-center justify-center bg-background relative overflow-hidden px-4">
       <div className="absolute top-1/4 left-1/4 h-96 w-96 rounded-full bg-primary/5 blur-3xl" />
       <div className="absolute bottom-1/4 right-1/4 h-96 w-96 rounded-full bg-indigo-500/5 blur-3xl" />
-      
+
       <div className="w-full max-w-md relative z-10">
         <form onSubmit={handleRegister}>
-          <Card className="border-border bg-card shadow-lg">
+          <Card className="border-border dark:bg-[#000] shadow-lg">
             <CardHeader className="space-y-2 text-center pb-4">
-              <div className="flex justify-center mb-1">
-                <div className="h-10 w-10 bg-primary/10 rounded-xl flex items-center justify-center shadow-sm">
-                  <Sparkles className="h-5 w-5 text-primary" />
-                </div>
+              <div className="flex justify-center mb-4">
+                <img src="/logo/CondaAI.png" alt="Conda AI" className="h-10 w-10 dark:invert dark:brightness-200" />
               </div>
               <CardTitle className="text-xl font-bold tracking-tight text-foreground">Create Account</CardTitle>
               <CardDescription className="text-xs text-muted-foreground">
                 Join the Conda AI platform
               </CardDescription>
             </CardHeader>
-            
+
             <CardContent className="space-y-4">
               {error && (
                 <div className="p-3 bg-danger/10 border border-danger/25 text-danger text-xs rounded-lg">

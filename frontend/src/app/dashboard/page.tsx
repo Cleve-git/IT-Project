@@ -85,8 +85,8 @@ export default function DashboardPage() {
       <aside className="w-14 h-screen fixed left-0 top-0 border-r border-border bg-card flex flex-col items-center justify-between py-3 z-40">
         <div className="flex flex-col items-center gap-1">
           {/* Brand */}
-          <div className="h-9 w-9 bg-primary rounded-lg flex items-center justify-center shadow-sm mb-2">
-            <Sparkles className="h-4 w-4 text-white" />
+          <div className="rounded-lg flex items-center justify-center shadow-sm mb-2">
+            <img src="/logo/CondaAI.png" alt="Conda AI" className="h-6 w-6 dark:invert dark:brightness-200" />
           </div>
           {/* New chat */}
           <button
@@ -185,12 +185,11 @@ export default function DashboardPage() {
 
       {/* Main content — offset by the rail, and by the panel when one is open */}
       <div className={`flex-1 flex flex-col min-h-screen transition-[margin] duration-200 ${activePanel ? 'ml-[344px]' : 'ml-14'}`}>
-        
+
         {/* 2. Sticky Top Navigation Bar */}
         <header className="h-16 border-b border-border/60 bg-background/80 backdrop-blur-md sticky top-0 z-10 px-6 flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <MessageSquare className="h-4 w-4 text-primary" />
-            <h1 className="font-bold text-sm text-foreground">Chat Workspace</h1>
+            <h1 className="font-semibold text-lg text-foreground">Conda AI</h1>
           </div>
 
           <div className="flex items-center space-x-4">

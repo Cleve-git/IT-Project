@@ -26,11 +26,19 @@ export const QueryVisualizer: React.FC<QueryVisualizerProps> = ({ config }) => {
   useEffect(() => {
     const read = () => {
       const styles = getComputedStyle(document.documentElement);
-      const primary = styles.getPropertyValue('--primary').trim() || '#2563EB';
+      const primaryRaw = styles.getPropertyValue('--primary').trim() || '#2563EB';
       const isDark = document.documentElement.classList.contains('dark');
+      
+      // Plotly does not natively support oklch() color syntax.
+      // We map the raw oklch values to corresponding hex equivalents.
+      let primary = primaryRaw;
+      if (primaryRaw.startsWith('oklch')) {
+        primary = isDark ? '#f1f5f9' : '#0f172a';
+      }
+
       setTheme({
         primary,
-        grid: isDark ? '#1e293b' : '#e2e8f0',
+        grid: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)',
         font: isDark ? '#94a3b8' : '#64748b',
       });
     };

@@ -66,19 +66,23 @@ export const AnalyticsCard: React.FC = () => {
         {items.map((item, index) => {
           const Icon = item.icon;
           return (
-            <Card key={index} className="hover:border-primary/20 hover:shadow-md transition-all duration-150 ease-out bg-card">
-              <CardHeader className="flex flex-row items-center justify-between pb-2 p-5">
+            <Card key={index} className="hover:border-primary/20 hover:shadow-md transition-all duration-150 ease-out bg-card relative overflow-hidden">
+              <CardHeader className="pb-2 p-5">
                 <CardTitle className="text-xs uppercase font-bold text-muted-foreground tracking-wider">
                   {item.title}
                 </CardTitle>
-                <div className={`h-8 w-8 rounded-lg flex items-center justify-center border ${item.color}`}>
-                  <Icon className="h-4 w-4" />
-                </div>
               </CardHeader>
               <CardContent className="p-5 pt-0">
                 <div className="text-2xl font-bold text-foreground tracking-tight">{item.value}</div>
                 <p className="text-[10px] text-muted-foreground mt-1">{item.description}</p>
               </CardContent>
+              <Icon 
+                className="absolute right-2 top-2 h-20 w-20 text-primary pointer-events-none opacity-15"
+                style={{
+                  WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%)',
+                  maskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%)'
+                }}
+              />
             </Card>
           );
         })}
@@ -86,9 +90,8 @@ export const AnalyticsCard: React.FC = () => {
 
       {/* Query Accuracy Health Meter */}
       {stats && (
-        <Card className="border-primary/15 bg-primary/5 shadow-sm">
+        <Card className="border-primary/15 bg-primary/5 shadow-sm relative overflow-hidden">
           <CardHeader className="p-5 pb-3 flex flex-row items-center space-x-2">
-            <Activity className="h-4 w-4 text-primary animate-pulse" />
             <CardTitle className="text-sm font-bold text-primary">SQL Compiler Success Rate</CardTitle>
           </CardHeader>
           <CardContent className="p-5 pt-0 flex flex-col sm:flex-row items-center sm:justify-between gap-4">
@@ -105,6 +108,13 @@ export const AnalyticsCard: React.FC = () => {
               />
             </div>
           </CardContent>
+          <Activity 
+            className="absolute right-3 top-3 h-20 w-20 text-primary pointer-events-none opacity-15"
+            style={{
+              WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%)',
+              maskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%)'
+            }}
+          />
         </Card>
       )}
     </div>

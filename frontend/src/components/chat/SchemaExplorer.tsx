@@ -80,7 +80,6 @@ export const SchemaExplorer: React.FC = () => {
   return (
     <Card className="border-border/60 bg-card shadow-sm h-full flex flex-col">
       <CardHeader className="px-4 py-3.5 border-b border-border/60 flex flex-row items-center gap-2">
-        <Database className="h-4 w-4 text-primary" />
         <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Schema Explorer</CardTitle>
       </CardHeader>
       <CardContent className="p-2 space-y-0.5 flex-1 overflow-y-auto">

@@ -15,9 +15,9 @@ const SUGGESTED_PROMPTS = [
 ];
 
 export const ChatWindow: React.FC = () => {
-  const { 
-    currentConversationId, messages, isLoading, 
-    setConversations, setCurrentConversationId, setMessages, addMessage, setLoading 
+  const {
+    currentConversationId, messages, isLoading,
+    setConversations, setCurrentConversationId, setMessages, addMessage, setLoading
   } = useChatStore();
 
   const [input, setInput] = useState('');
@@ -103,7 +103,7 @@ export const ChatWindow: React.FC = () => {
 
     try {
       const response = await api.submitQuery(text, currentConversationId || undefined);
-      
+
       if (!currentConversationId && response.conversation_id) {
         setCurrentConversationId(response.conversation_id);
         const list = await api.listConversations();
@@ -135,7 +135,7 @@ export const ChatWindow: React.FC = () => {
 
       {/* Center Dialogue Viewport — blends with the page background (no card frame) */}
       <div className="flex-1 flex flex-col justify-between overflow-hidden h-[calc(100vh-8rem)]">
-        
+
         {/* Messages Stream scroll container */}
         <div className="flex-1 overflow-y-auto p-6 scrollbar-thin">
           {messages.length === 0 && loadingHistory ? (
@@ -145,15 +145,9 @@ export const ChatWindow: React.FC = () => {
             </div>
           ) : messages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center max-w-2xl mx-auto text-center px-4">
-              <div className="h-11 w-11 rounded-2xl bg-primary/10 flex items-center justify-center mb-6">
-                <Terminal className="h-5 w-5 text-primary" />
-              </div>
-              <h2 className="text-2xl font-semibold text-foreground tracking-tight mb-2.5">
+              <h2 className="text-2xl font-semibold text-foreground tracking-tight mb-8">
                 What would you like to analyze?
               </h2>
-              <p className="text-sm text-muted-foreground leading-relaxed mb-9 max-w-md">
-                Ask a business question in plain language — get the answer, the SQL, and a chart.
-              </p>
 
               {/* Suggested prompts */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 w-full">
@@ -222,8 +216,7 @@ export const ChatWindow: React.FC = () => {
             </Button>
           </form>
           <div className="text-[10px] text-muted-foreground/70 text-center mt-2.5 flex items-center justify-center gap-1.5">
-            <BookOpen className="h-3 w-3" />
-            <span>Read-only — only SELECT queries are allowed, modifications are blocked.</span>
+            <span>Read-only, only SELECT queries are allowed, modifications are blocked.</span>
           </div>
         </div>
 

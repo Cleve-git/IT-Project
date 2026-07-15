@@ -66,8 +66,8 @@ export default function AdminPage({ defaultTab = 'analytics' }: AdminPageProps) 
             Your current account role (<strong>{user.role}</strong>) does not have authorization policies to view administrative dashboards.
           </p>
           <div className="flex justify-center space-x-3 pt-2">
-            <Link 
-              href="/dashboard" 
+            <Link
+              href="/dashboard"
               className="px-4 py-2 bg-card border border-border hover:bg-muted text-foreground text-xs font-semibold rounded-[10px] transition-colors"
             >
               Back to Chat
@@ -96,14 +96,14 @@ export default function AdminPage({ defaultTab = 'analytics' }: AdminPageProps) 
 
   return (
     <div className="min-h-screen text-foreground flex">
-      
+
       {/* 1. Fixed Left Sidebar */}
       <aside className="w-64 h-screen fixed left-0 top-0 border-r border-border bg-card flex flex-col justify-between p-4 z-20">
         <div className="space-y-6">
           {/* Logo Brand */}
           <div className="flex items-center space-x-2.5 px-2">
-            <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center shadow-sm">
-              <Database className="h-4 w-4 text-white" />
+            <div className="rounded-lg flex items-center justify-center shadow-sm">
+              <img src="/logo/CondaAI.png" alt="Conda AI" className="h-6 w-6 dark:invert dark:brightness-200" />
             </div>
             <div>
               <span className="font-bold text-sm text-foreground tracking-tight block">Conda AI</span>
@@ -114,10 +114,9 @@ export default function AdminPage({ defaultTab = 'analytics' }: AdminPageProps) 
           {/* Navigation link back to chat */}
           <Link
             href="/dashboard"
-            className="w-full flex items-center justify-center space-x-2 border border-border hover:border-primary/45 hover:bg-muted py-2.5 rounded-[10px] text-xs font-semibold text-muted-foreground hover:text-foreground transition-all duration-150 ease-out"
+            className="w-full flex items-center justify-center space-x-2 border border-border hover:border-primary/45 hover:bg-muted py-2.5 rounded-[10px] text-xs font-semibold text-muted-foreground hover:text-foreground transition-all duration-150 ease-out shadow-[inset_0_1px_0_0_rgba(255,255,255,0.15)]"
           >
-            <MessageSquare className="h-4 w-4 text-primary" />
-            <span>Chat Workspace</span>
+            <span>Back to Chat</span>
           </Link>
 
           {/* Admin Navigation list */}
@@ -130,11 +129,10 @@ export default function AdminPage({ defaultTab = 'analytics' }: AdminPageProps) 
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id)}
-                  className={`w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] cursor-pointer transition-colors ${
-                    isActive
-                      ? 'bg-primary/10 text-primary font-medium'
+                  className={`w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] cursor-pointer transition-colors ${isActive
+                      ? 'bg-primary/10 text-primary font-medium shadow-[inset_0_1px_0_0_rgba(255,255,255,0.15)]'
                       : 'text-muted-foreground hover:bg-muted/40 hover:text-foreground'
-                  }`}
+                    }`}
                 >
                   <Icon className="h-4 w-4" />
                   <span>{item.label}</span>
@@ -149,7 +147,7 @@ export default function AdminPage({ defaultTab = 'analytics' }: AdminPageProps) 
           <div className="p-3 bg-muted/60 rounded-lg border border-border/80 text-[11px] text-muted-foreground flex flex-col gap-0.5">
             <div className="font-semibold text-foreground truncate">{user.email}</div>
             <div className="flex items-center space-x-1 mt-0.5 text-[9px] uppercase tracking-wider font-bold text-primary">
-              <Shield className="h-2.5 w-2.5 mr-0.5" /> Admin Console
+              Admin Console
             </div>
           </div>
           <button
@@ -164,11 +162,10 @@ export default function AdminPage({ defaultTab = 'analytics' }: AdminPageProps) 
 
       {/* Outer Content Frame wrapper (offset left by sidebar width 64) */}
       <div className="flex-1 ml-64 flex flex-col min-h-screen">
-        
+
         {/* 2. Sticky Top Navigation Bar */}
         <header className="h-16 border-b border-border/60 bg-background/80 backdrop-blur-md sticky top-0 z-10 px-6 flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <ShieldCheck className="h-4 w-4 text-primary" />
             <h1 className="font-bold text-sm text-foreground">
               {adminNavItems.find(item => item.id === activeTab)?.label || "Admin Workspace"}
             </h1>
@@ -178,7 +175,7 @@ export default function AdminPage({ defaultTab = 'analytics' }: AdminPageProps) 
 
         {/* 3. Main Scrollable Content Area */}
         <main className="flex-1 p-6 overflow-y-auto">
-          <div className="max-w-6xl mx-auto bg-card border border-border/60 rounded-2xl p-6">
+          <div className="max-w-6xl mx-auto bg-card border border-border/60 rounded-2xl p-6 dark:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08)]">
             {activeTab === 'analytics' && <AnalyticsCard />}
             {activeTab === 'evaluation' && <EvaluationMatrix />}
             {activeTab === 'users' && <UserManagementTable />}

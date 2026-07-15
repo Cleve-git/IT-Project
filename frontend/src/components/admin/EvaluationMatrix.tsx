@@ -70,11 +70,19 @@ export const EvaluationMatrix: React.FC = () => {
     // Read Tailwind CSS theme variable values
     const readTheme = () => {
       const styles = getComputedStyle(document.documentElement);
-      const primary = styles.getPropertyValue('--primary').trim() || '#6366f1';
+      const primaryRaw = styles.getPropertyValue('--primary').trim() || '#6366f1';
       const isDark = document.documentElement.classList.contains('dark');
+      
+      // Plotly does not natively support oklch() color syntax.
+      // We map the raw oklch values to corresponding hex equivalents.
+      let primary = primaryRaw;
+      if (primaryRaw.startsWith('oklch')) {
+        primary = isDark ? '#f1f5f9' : '#0f172a';
+      }
+
       setTheme({
         primary,
-        grid: isDark ? '#1e293b' : '#e2e8f0',
+        grid: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)',
         font: isDark ? '#94a3b8' : '#64748b',
         paperBg: 'rgba(0,0,0,0)'
       });
@@ -128,8 +136,11 @@ export const EvaluationMatrix: React.FC = () => {
       metrics.failed_other_count
     ];
     
-    // Emerald Green, Amber, Blue, Red
-    const colors = ['#10B981', '#F59E0B', '#3B82F6', '#EF4444'];
+    const isDark = document.documentElement.classList.contains('dark');
+    // Use softer colors for dark mode to have clean contrast against dark theme
+    const colors = isDark 
+      ? ['#34D399', '#FBBF24', '#60A5FA', '#F87171']
+      : ['#10B981', '#F59E0B', '#3B82F6', '#EF4444'];
     
     return [
       {
@@ -197,14 +208,11 @@ export const EvaluationMatrix: React.FC = () => {
       {/* 2. KPI Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* KPI 1: Execution Accuracy */}
-        <Card className="hover:border-primary/20 hover:shadow-md transition-all bg-card">
-          <CardHeader className="flex flex-row items-center justify-between pb-2 p-5">
+        <Card className="hover:border-primary/20 hover:shadow-md transition-all bg-card relative overflow-hidden">
+          <CardHeader className="pb-2 p-5">
             <CardTitle className="text-xs uppercase font-bold text-muted-foreground tracking-wider">
               Execution Accuracy
             </CardTitle>
-            <div className="h-8 w-8 rounded-lg flex items-center justify-center border text-primary bg-primary/5 border-primary/20">
-              <Activity className="h-4 w-4" />
-            </div>
           </CardHeader>
           <CardContent className="p-5 pt-0">
             <div className="text-2xl font-bold tracking-tight text-foreground">
@@ -214,17 +222,21 @@ export const EvaluationMatrix: React.FC = () => {
               Queries returning requested data vs out-of-scope/empty datasets.
             </p>
           </CardContent>
+          <Activity 
+            className="absolute right-2 top-2 h-20 w-20 text-primary pointer-events-none opacity-15"
+            style={{
+              WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%)',
+              maskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%)'
+            }}
+          />
         </Card>
 
         {/* KPI 2: SQL Syntax Success Rate */}
-        <Card className="hover:border-primary/20 hover:shadow-md transition-all bg-card">
-          <CardHeader className="flex flex-row items-center justify-between pb-2 p-5">
+        <Card className="hover:border-primary/20 hover:shadow-md transition-all bg-card relative overflow-hidden">
+          <CardHeader className="pb-2 p-5">
             <CardTitle className="text-xs uppercase font-bold text-muted-foreground tracking-wider">
               Syntax Success Rate
             </CardTitle>
-            <div className="h-8 w-8 rounded-lg flex items-center justify-center border text-emerald-500 bg-emerald-500/5 border-emerald-500/20">
-              <CheckCircle2 className="h-4 w-4" />
-            </div>
           </CardHeader>
           <CardContent className="p-5 pt-0">
             <div className="text-2xl font-bold tracking-tight text-foreground">
@@ -234,17 +246,21 @@ export const EvaluationMatrix: React.FC = () => {
               Percentage of SQL queries executed without database exceptions.
             </p>
           </CardContent>
+          <CheckCircle2 
+            className="absolute right-2 top-2 h-20 w-20 text-emerald-500 pointer-events-none opacity-15"
+            style={{
+              WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%)',
+              maskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%)'
+            }}
+          />
         </Card>
 
         {/* KPI 3: Average Latency */}
-        <Card className="hover:border-primary/20 hover:shadow-md transition-all bg-card">
-          <CardHeader className="flex flex-row items-center justify-between pb-2 p-5">
+        <Card className="hover:border-primary/20 hover:shadow-md transition-all bg-card relative overflow-hidden">
+          <CardHeader className="pb-2 p-5">
             <CardTitle className="text-xs uppercase font-bold text-muted-foreground tracking-wider">
               Average Latency
             </CardTitle>
-            <div className="h-8 w-8 rounded-lg flex items-center justify-center border text-blue-500 bg-blue-500/5 border-blue-500/20">
-              <TrendingUp className="h-4 w-4" />
-            </div>
           </CardHeader>
           <CardContent className="p-5 pt-0">
             <div className="text-2xl font-bold tracking-tight text-foreground">
@@ -254,17 +270,21 @@ export const EvaluationMatrix: React.FC = () => {
               Mean response generation time of the Groq LLM.
             </p>
           </CardContent>
+          <TrendingUp 
+            className="absolute right-2 top-2 h-20 w-20 text-blue-500 pointer-events-none opacity-15"
+            style={{
+              WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%)',
+              maskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%)'
+            }}
+          />
         </Card>
 
         {/* KPI 4: Tokens & Cost */}
-        <Card className="hover:border-primary/20 hover:shadow-md transition-all bg-card">
-          <CardHeader className="flex flex-row items-center justify-between pb-2 p-5">
+        <Card className="hover:border-primary/20 hover:shadow-md transition-all bg-card relative overflow-hidden">
+          <CardHeader className="pb-2 p-5">
             <CardTitle className="text-xs uppercase font-bold text-muted-foreground tracking-wider">
               Total API Token Cost
             </CardTitle>
-            <div className="h-8 w-8 rounded-lg flex items-center justify-center border text-amber-500 bg-amber-500/5 border-amber-500/20">
-              <DollarSign className="h-4 w-4" />
-            </div>
           </CardHeader>
           <CardContent className="p-5 pt-0">
             <div className="text-xl font-bold tracking-tight text-foreground truncate" title={metrics ? `${metrics.total_tokens.toLocaleString()} tokens` : ''}>
@@ -274,6 +294,13 @@ export const EvaluationMatrix: React.FC = () => {
               Usage: {metrics ? (metrics.total_tokens).toLocaleString() : '0'} tokens total.
             </p>
           </CardContent>
+          <DollarSign 
+            className="absolute right-2 top-2 h-20 w-20 text-amber-500 pointer-events-none opacity-15"
+            style={{
+              WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%)',
+              maskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%)'
+            }}
+          />
         </Card>
       </div>
 

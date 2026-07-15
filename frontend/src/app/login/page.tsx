@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Sparkles, Mail, Lock, Loader2, ArrowRight } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
 import { Button } from '../../components/ui/button';
@@ -67,9 +68,9 @@ export default function LoginPage() {
       
       <div className="w-full max-w-md relative z-10">
         <form onSubmit={handleLogin}>
-          <Card className="border-border/60 bg-white/40 dark:bg-[#0B1329]/60 backdrop-blur-lg shadow-xl">
+          <Card className="border-border/60 bg-white/40 dark:bg-[#000] backdrop-blur-lg shadow-xl">
             <CardHeader className="space-y-2 text-center pb-4">
-              <div className="flex justify-center mb-1">
+              <div className="flex justify-center mb-4">
                 <img src="/logo/CondaAI.png" alt="Conda AI logo" className="h-8 w-8 rounded-xl shadow-sm dark:invert dark:brightness-200" />
               </div>
               <CardTitle className="text-xl font-bold tracking-tight text-foreground">Conda AI</CardTitle>
@@ -120,6 +121,13 @@ export default function LoginPage() {
               <Button type="submit" className="w-full py-2.5" disabled={loading}>
                 {loading ? <Loader2 className="h-4 w-4 animate-spin text-primary-foreground" /> : 'Sign In'}
               </Button>
+
+              <div className="text-center text-xs text-muted-foreground">
+                Don&apos;t have an account?{' '}
+                <Link href="/register" className="text-primary hover:text-primary/80 font-semibold transition-colors">
+                  Register
+                </Link>
+              </div>
 
               {/* Developer credentials shortcuts */}
               <div className="w-full pt-4 border-t border-border space-y-2">
