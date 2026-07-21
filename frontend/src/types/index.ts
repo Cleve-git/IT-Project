@@ -121,6 +121,42 @@ export interface ImportResult {
   errors: { row: number; message: string }[];
 }
 
+export interface DatasetColumn {
+  name: string;
+  type: string;
+  source?: string | null;
+}
+
+export interface DatasetPreview {
+  columns: DatasetColumn[];
+  sample_rows: Record<string, any>[];
+  total_rows: number;
+}
+
+export interface DynamicDataset {
+  id: string;
+  table_name: string;
+  display_name: string;
+  description?: string | null;
+  columns: DatasetColumn[];
+  row_count: number;
+  source_filename?: string | null;
+  created_at: string;
+}
+
+export interface AppendResult {
+  inserted: number;
+  failed: number;
+  errors: { row: number; message: string }[];
+  matched_columns?: string[] | null;
+  ignored_columns?: string[] | null;
+}
+
+export interface AppendTargets {
+  core: string[];
+  dynamic: { id: string; table_name: string; display_name: string }[];
+}
+
 export interface BenchmarkResult {
   benchmark_id: string;
   nl_query: string;

@@ -20,25 +20,16 @@ from app.infrastructure.repositories.business_repository import (
 router = APIRouter(prefix="/admin/data", tags=["Business Data Admin"], dependencies=[Depends(require_admin)])
 
 
-async def _import_csv(
-    file: UploadFile,
+async def import_dataframe(
+    df: "pd.DataFrame",
     schema_cls: Type[BaseModel],
     repo,
     fk_checks: Optional[List[Tuple[str, Any]]] = None,
 ) -> Dict[str, Any]:
-    """Parse an uploaded CSV and insert one row per record via `repo.create`,
-    validating each row against `schema_cls` first. Bad rows are skipped and
-    reported rather than aborting the whole import."""
-    ext = (file.filename or "").rsplit(".", 1)[-1].lower()
-    if ext != "csv":
-        raise HTTPException(status_code=400, detail="Only CSV files are supported for import")
-
-    content = await file.read()
-    try:
-        df = pd.read_csv(BytesIO(content))
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Could not parse CSV: {e}")
-
+    """Insert one row per record via `repo.create`, validating each row against
+    `schema_cls` first. Bad rows are skipped and reported rather than aborting the
+    whole import. Shared by the per-entity import endpoints and the unified
+    dataset-append endpoint."""
     df = df.where(pd.notnull(df), None)
 
     inserted = 0
@@ -72,6 +63,47 @@ async def _import_csv(
             errors.append({"row": row_num, "message": str(e)})
 
     return {"inserted": inserted, "failed": len(errors), "errors": errors[:20]}
+
+
+async def _import_csv(
+    file: UploadFile,
+    schema_cls: Type[BaseModel],
+    repo,
+    fk_checks: Optional[List[Tuple[str, Any]]] = None,
+) -> Dict[str, Any]:
+    """Parse an uploaded CSV file into a dataframe, then delegate to `import_dataframe`."""
+    ext = (file.filename or "").rsplit(".", 1)[-1].lower()
+    if ext != "csv":
+        raise HTTPException(status_code=400, detail="Only CSV files are supported for import")
+
+    content = await file.read()
+    try:
+        df = pd.read_csv(BytesIO(content))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Could not parse CSV: {e}")
+
+    return await import_dataframe(df, schema_cls, repo, fk_checks)
+
+
+def build_core_importer(entity: str, db: AsyncSession):
+    """Return (schema_cls, repo, fk_checks) for a built-in business table, or None.
+
+    Used by the unified dataset uploader to append rows to an existing core table
+    with the same validation + FK checks as the per-entity import endpoints."""
+    if entity == "customers":
+        return CustomerCreate, CustomerRepository(db), None
+    if entity == "products":
+        return ProductCreate, ProductRepository(db), None
+    if entity == "orders":
+        customer_repo = CustomerRepository(db)
+        return OrderCreate, OrderRepository(db), [("customer_id", lambda v: customer_repo.get(int(v)))]
+    if entity == "payments":
+        order_repo = OrderRepository(db)
+        return PaymentCreate, PaymentRepository(db), [("order_id", lambda v: order_repo.get(int(v)))]
+    return None
+
+
+CORE_ENTITY_KEYS = ["customers", "products", "orders", "payments"]
 
 
 # --- Customers ---
