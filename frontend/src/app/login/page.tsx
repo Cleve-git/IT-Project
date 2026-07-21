@@ -8,6 +8,7 @@ import { useAuthStore } from '../../store/useAuthStore';
 import { Button } from '../../components/ui/button';
 import ThemeToggle from '../../components/ui/ThemeToggle';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '../../components/ui/card';
+import { api } from '../../services/api';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -35,14 +36,11 @@ export default function LoginPage() {
 
       const mockToken = `mock-token-${mockRole}-${mockUid}`;
 
-      const profile = await fetch('http://localhost:8000/api/v1/auth/sync', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: mockUid, email, full_name: email.split('@')[0].toUpperCase() })
-      }).then(res => {
-        if (!res.ok) throw new Error("Backend connection failed. Is the server running?");
-        return res.json();
-      });
+      const profile = await api.syncProfile(
+        mockUid,
+        email,
+        email.split('@')[0].toUpperCase()
+      );
 
       setSession(profile, mockToken);
       router.push('/dashboard');
