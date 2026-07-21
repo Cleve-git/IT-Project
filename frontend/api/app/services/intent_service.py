@@ -1,7 +1,7 @@
 import re
 from typing import List
 from langchain_groq import ChatGroq
-from langchain.schema import HumanMessage, SystemMessage
+from langchain_core.messages import HumanMessage, SystemMessage
 from app.core.config import settings
 
 INTENT_SYSTEM_PROMPT = """You are an Intent Classification Engine for a Conversational Data Analyst application.
