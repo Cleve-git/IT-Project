@@ -1,12 +1,21 @@
 import os
 import sys
 
-# 1. Dapatkan path folder 'api' dan folder 'api/app'
-api_dir = os.path.dirname(__file__)
-app_dir = os.path.join(api_dir, "app")
+# 1. Daftarkan folder 'frontend/api' DAN 'frontend/api/app' ke sys.path
+current_dir = os.path.dirname(os.path.abspath(__file__))
+app_dir = os.path.join(current_dir, "app")
 
-# 2. Masukkan KEDUA folder tersebut ke dalam sys.path Python
-sys.path.insert(0, api_dir)
-sys.path.insert(0, app_dir)
+if current_dir not in sys.path:
+    sys.path.insert(0, current_dir)
+if app_dir not in sys.path:
+    sys.path.insert(0, app_dir)
 
-from app.main import app
+# 2. Import FastAPI app dari app.main
+try:
+    from app.main import app
+except ImportError:
+    # Fallback import jika sys.path langsung merujuk ke dalam folder app
+    from main import app
+
+# 3. Expose handler untuk Vercel Serverless
+app = app
