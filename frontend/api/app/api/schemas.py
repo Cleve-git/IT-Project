@@ -365,6 +365,40 @@ class ImportResultResponse(BaseModel):
     errors: List[ImportErrorItem]
 
 
+class DatasetColumn(BaseModel):
+    name: str
+    type: str
+    source: Optional[str] = None
+
+
+class DatasetPreviewResponse(BaseModel):
+    columns: List[DatasetColumn]
+    sample_rows: List[dict]
+    total_rows: int
+
+
+class DynamicDatasetResponse(BaseModel):
+    id: str
+    table_name: str
+    display_name: str
+    description: Optional[str] = None
+    columns: List[DatasetColumn]
+    row_count: int
+    source_filename: Optional[str] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class AppendResultResponse(BaseModel):
+    inserted: int
+    failed: int
+    errors: List[ImportErrorItem]
+    matched_columns: Optional[List[str]] = None
+    ignored_columns: Optional[List[str]] = None
+
+
 class BenchmarkResultResponse(BaseModel):
     benchmark_id: str
     nl_query: str
