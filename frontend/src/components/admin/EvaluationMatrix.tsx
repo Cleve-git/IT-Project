@@ -104,9 +104,16 @@ export const EvaluationMatrix: React.FC = () => {
   const getLatencyChartData = () => {
     if (!metrics || !metrics.recent_logs || metrics.recent_logs.length === 0) return [];
     
-    // Sort chronologically
-    const sortedLogs = [...metrics.recent_logs].reverse();
-    const xData = sortedLogs.map((log, idx) => log.created_at ? new Date(log.created_at).toLocaleString() : `Query ${idx + 1}`);
+    // Sort from newest to oldest
+    const sortedLogs = [...metrics.recent_logs];
+    const n = sortedLogs.length;
+    const xData = sortedLogs.map((log, idx) => {
+      const qLabel = `Q${n - idx}`;
+      if (!log.created_at) return qLabel;
+      const d = new Date(log.created_at);
+      const timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+      return `${timeStr} (${qLabel})`;
+    });
     const yData = sortedLogs.map(log => log.llm_latency_ms / 1000); // convert to seconds
     
     return [
@@ -122,6 +129,38 @@ export const EvaluationMatrix: React.FC = () => {
         fillcolor: `${theme.primary}15`
       }
     ];
+  };
+
+  // Compute selected X-axis tick marks to prevent overlapping text (auto-skip)
+  const getLatencyTicks = () => {
+    if (!metrics || !metrics.recent_logs || metrics.recent_logs.length === 0) return { tickvals: [], ticktext: [] };
+    const sortedLogs = [...metrics.recent_logs];
+    const n = sortedLogs.length;
+    const xData = sortedLogs.map((log, idx) => {
+      const qLabel = `Q${n - idx}`;
+      if (!log.created_at) return qLabel;
+      const d = new Date(log.created_at);
+      const timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+      return `${timeStr} (${qLabel})`;
+    });
+
+    if (n === 0) return { tickvals: [], ticktext: [] };
+    
+    // Limit to max 5 ticks
+    const maxTicks = 5;
+    const tickvals = [];
+    
+    if (n <= maxTicks) {
+      return { tickvals: xData, ticktext: xData };
+    }
+    
+    // Distribute 5 ticks evenly across the items
+    for (let i = 0; i < maxTicks; i++) {
+      const idx = Math.round((i * (n - 1)) / (maxTicks - 1));
+      tickvals.push(xData[idx]);
+    }
+    
+    return { tickvals, ticktext: tickvals };
   };
 
   // Setup Outcome Distribution chart data
@@ -142,6 +181,14 @@ export const EvaluationMatrix: React.FC = () => {
       ? ['#34D399', '#FBBF24', '#60A5FA', '#F87171']
       : ['#10B981', '#F59E0B', '#3B82F6', '#EF4444'];
     
+    const total = values.reduce((a, b) => a + b, 0);
+    const textLabels = values.map(val => {
+      // If the value is 0, return an empty string to hide the label and prevent text overlap
+      if (val === 0) return '';
+      const percentage = total > 0 ? Math.round((val / total) * 100) : 0;
+      return `${percentage}% (${val})`;
+    });
+    
     return [
       {
         values: values,
@@ -149,7 +196,8 @@ export const EvaluationMatrix: React.FC = () => {
         type: 'pie',
         hole: 0.5,
         marker: { colors: colors },
-        textinfo: 'percent+value',
+        text: textLabels,
+        textinfo: 'text',
         hoverinfo: 'label+percent+value',
         insidetextorientation: 'radial'
       }
@@ -308,25 +356,30 @@ export const EvaluationMatrix: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
         {/* Latency Trends over Time */}
-        <Card className="bg-card">
+        <Card className="bg-card overflow-hidden">
           <CardHeader className="p-5 pb-2">
             <CardTitle className="text-sm font-bold text-foreground">LLM Latency Trends over Time</CardTitle>
           </CardHeader>
-          <CardContent className="p-5 pt-0">
+          <CardContent className="p-5 pt-0 overflow-hidden">
             {metrics && metrics.recent_logs.length > 0 ? (
               <Plot
                 data={getLatencyChartData() as any}
                 layout={{
                   autosize: true,
                   height: 280,
-                  margin: { t: 15, b: 40, l: 45, r: 15 },
+                  margin: { t: 15, b: 65, l: 45, r: 15 },
                   paper_bgcolor: theme.paperBg,
                   plot_bgcolor: theme.paperBg,
                   xaxis: {
                     showgrid: true,
                     gridcolor: theme.grid,
                     tickfont: { color: theme.font, size: 9 },
-                    showticklabels: false
+                    showticklabels: true,
+                    tickangle: -30,
+                    tickmode: 'array',
+                    tickvals: getLatencyTicks().tickvals,
+                    ticktext: getLatencyTicks().ticktext,
+                    title: { text: 'Query Timestamp', font: { color: theme.font, size: 10 }, standoff: 15 }
                   },
                   yaxis: {
                     showgrid: true,
@@ -346,22 +399,27 @@ export const EvaluationMatrix: React.FC = () => {
         </Card>
 
         {/* Success vs Failure Distribution */}
-        <Card className="bg-card">
+        <Card className="bg-card overflow-hidden">
           <CardHeader className="p-5 pb-2">
             <CardTitle className="text-sm font-bold text-foreground">Query Execution Outcomes</CardTitle>
           </CardHeader>
-          <CardContent className="p-5 pt-0">
+          <CardContent className="p-5 pt-0 overflow-hidden">
             {metrics && metrics.total_queries > 0 ? (
               <Plot
                 data={getOutcomeChartData() as any}
                 layout={{
                   autosize: true,
                   height: 280,
-                  margin: { t: 10, b: 10, l: 10, r: 10 },
+                  margin: { t: 15, b: 45, l: 15, r: 15 },
                   paper_bgcolor: theme.paperBg,
                   plot_bgcolor: theme.paperBg,
                   font: { color: theme.font, size: 10 },
-                  legend: { orientation: 'h', x: 0, y: -0.15 }
+                  legend: { 
+                    orientation: 'h', 
+                    x: 0, 
+                    y: -0.22,
+                    font: { size: 9.5 }
+                  }
                 }}
                 config={{ responsive: true, displayModeBar: false }}
               />
@@ -476,13 +534,6 @@ export const EvaluationMatrix: React.FC = () => {
                   Click "Run Test Suite" to execute validation benchmarks against Groq and calculate accuracy drifts.
                 </p>
               </div>
-              <Button
-                onClick={handleRunTestSuite}
-                disabled={runningTestSuite}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground cursor-pointer text-xs font-semibold px-4 py-2 rounded-lg"
-              >
-                Execute Test Suite
-              </Button>
             </div>
           )}
         </CardContent>
