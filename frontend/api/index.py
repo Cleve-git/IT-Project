@@ -1,7 +1,12 @@
 import os
 import sys
 
-# Ensure frontend/api directory is in python search path for importing app module
-sys.path.insert(0, os.path.dirname(__file__))
+# 1. Dapatkan path folder 'api' dan folder 'api/app'
+api_dir = os.path.dirname(__file__)
+app_dir = os.path.join(api_dir, "app")
+
+# 2. Masukkan KEDUA folder tersebut ke dalam sys.path Python
+sys.path.insert(0, api_dir)
+sys.path.insert(0, app_dir)
 
 from app.main import app
