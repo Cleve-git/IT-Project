@@ -20,9 +20,33 @@ class ApiService {
     if (typeof window === 'undefined') return null;
     const store = localStorage.getItem('cda-auth-store');
     if (!store) return null;
+
     try {
       const parsed = JSON.parse(store);
-      return parsed?.state?.token || null;
+      let token = parsed?.state?.token;
+
+      // Jika token tidak ada atau dalam format string 'undefined'/'null'
+      if (!token || token === 'undefined' || token === 'null') {
+        return null;
+      }
+
+      // Jika token berbentuk object, ambil field token-nya
+      if (typeof token === 'object') {
+        token = token.access_token || token.token || null;
+      }
+
+      if (typeof token !== 'string') return null;
+
+      // Bersihkan jika ada awalan 'Bearer ' ganda
+      const cleanToken = token.replace(/^Bearer\s+/i, '').trim();
+
+      // Validasi dasar JWT (JWT harus punya minimal 2 titik/3 segmen: header.payload.signature)
+      if (cleanToken.split('.').length !== 3) {
+        console.warn("Token JWT tidak valid (not enough segments):", cleanToken);
+        return null;
+      }
+
+      return cleanToken;
     } catch {
       return null;
     }
@@ -31,11 +55,11 @@ class ApiService {
   private async request<T>(path: string, options: RequestInit = {}): Promise<T> {
     const token = this.getAuthToken();
     const headers = new Headers(options.headers || {});
-    
+
     if (token) {
       headers.set('Authorization', `Bearer ${token}`);
     }
-    
+
     if (!(options.body instanceof FormData) && !headers.has('Content-Type')) {
       headers.set('Content-Type', 'application/json');
     }
