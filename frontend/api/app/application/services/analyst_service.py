@@ -73,9 +73,13 @@ Best Selling Product = product with the highest SUM(order_items.quantity)
 For month/quarter grouping use DATE_TRUNC('month'|'quarter', order_date) (order_date is a DATE).
 """
 
-SYSTEM_PROMPT = f"""You are a PostgreSQL data analyst.
+def build_system_prompt(dynamic_context: str = "") -> str:
+    """Assemble the NL->SQL system prompt, injecting any admin-uploaded tables so
+    the agent can answer questions about data added at runtime."""
+    return f"""You are a PostgreSQL data analyst.
 
 {DB_SCHEMA_CONTEXT}
+{dynamic_context}
 
 Rules:
 1. Generate PostgreSQL only.
@@ -115,6 +119,11 @@ Rules:
 }}
 """
 
+
+# Static prompt for the built-in schema (used where no DB session is handy).
+SYSTEM_PROMPT = build_system_prompt()
+
+
 class AnalystService:
     def __init__(self, db: AsyncSession):
         self.db = db
@@ -149,8 +158,12 @@ class AnalystService:
             }
             return is_ambig, clar, sql, reason, llm_meta
 
+        # Inject admin-uploaded tables so the agent can query data added at runtime.
+        from app.application.services.dynamic_table_service import DynamicTableService
+        dynamic_context = await DynamicTableService.schema_context(self.db)
+
         messages = [
-            SystemMessage(content=SYSTEM_PROMPT)
+            SystemMessage(content=build_system_prompt(dynamic_context))
         ]
 
         # Add conversation history (last 4 turns) so follow-up questions can build

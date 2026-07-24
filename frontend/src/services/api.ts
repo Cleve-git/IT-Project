@@ -2,7 +2,8 @@ import {
   Profile, Conversation, Message, UploadedDocument,
   ExtractedTable, SystemStats, QueryLog, BenchmarkResult,
   Customer, Product, Order, Payment, ImportResult,
-  EvaluationMetrics, TestSuiteResponse
+  EvaluationMetrics, TestSuiteResponse,
+  DatasetPreview, DynamicDataset, AppendResult, AppendTargets
 } from '../types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
@@ -238,6 +239,50 @@ class ApiService {
   async runTestSuite(): Promise<TestSuiteResponse> {
     return this.request<TestSuiteResponse>('/api/v1/admin/evaluation/test-suite', {
       method: 'POST',
+    });
+  }
+
+  // --- Dataset Upload API (create new tables / append to existing from a CSV) ---
+  async analyzeDataset(file: File): Promise<DatasetPreview> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.request<DatasetPreview>('/api/v1/admin/datasets/analyze', {
+      method: 'POST',
+      body: formData,
+    });
+  }
+
+  async createDataset(file: File, displayName: string): Promise<DynamicDataset> {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('display_name', displayName);
+    return this.request<DynamicDataset>('/api/v1/admin/datasets/create', {
+      method: 'POST',
+      body: formData,
+    });
+  }
+
+  async appendDataset(file: File, target: string): Promise<AppendResult> {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('target', target);
+    return this.request<AppendResult>('/api/v1/admin/datasets/append', {
+      method: 'POST',
+      body: formData,
+    });
+  }
+
+  async listDatasets(): Promise<DynamicDataset[]> {
+    return this.request<DynamicDataset[]>('/api/v1/admin/datasets');
+  }
+
+  async getAppendTargets(): Promise<AppendTargets> {
+    return this.request<AppendTargets>('/api/v1/admin/datasets/targets');
+  }
+
+  async deleteDataset(datasetId: string): Promise<{ success: boolean }> {
+    return this.request<{ success: boolean }>(`/api/v1/admin/datasets/${datasetId}`, {
+      method: 'DELETE',
     });
   }
 }

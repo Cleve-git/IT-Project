@@ -164,6 +164,28 @@ class ConversationContext(Base):
     updated_at = Column(DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
 
+class DynamicDataset(Base):
+    """
+    Registry of admin-created tables built from uploaded CSV documents.
+
+    Each row records one REAL PostgreSQL table (created at runtime via a trusted
+    admin path, never by the NL->SQL agent) so the analyst can discover and query
+    it. `columns` stores the inferred schema as [{"name": ..., "type": ...}] and
+    is injected into the agent's schema context at query time.
+    """
+    __tablename__ = "dynamic_datasets"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    table_name = Column(String(63), unique=True, nullable=False, index=True)  # actual pg table name (sanitized, dyn_*)
+    display_name = Column(String(200), nullable=False)
+    description = Column(Text, nullable=True)
+    columns = Column(JSON, nullable=False)          # [{"name": str, "type": str}]
+    row_count = Column(Integer, default=0, nullable=False)
+    source_filename = Column(String(255), nullable=True)
+    created_by = Column(String, nullable=True)      # profile id (no hard FK: dataset survives user changes)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+
 class Feedback(Base):
     __tablename__ = "feedback"
 
