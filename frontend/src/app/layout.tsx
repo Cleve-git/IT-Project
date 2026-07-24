@@ -16,6 +16,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Conda AI",
   description: "Natural language interface for executing secure, checked SQL on PostgreSQL databases, coupled with document intelligence table parsing.",
+  icons: {
+    icon: "/logo/CondaAI.png",
+    shortcut: "/logo/CondaAI.png",
+    apple: "/logo/CondaAI.png",
+  },
 };
 
 export default function RootLayout({
