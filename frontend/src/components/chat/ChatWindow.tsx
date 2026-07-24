@@ -236,9 +236,9 @@ export const ChatWindow: React.FC = () => {
                 ))}
                 {isLoading && (
                   <div className="flex justify-start mb-6">
-                    <div className="flex items-center space-x-2 bg-muted/40 border border-border/80 p-4 rounded-xl max-w-sm">
+                    <div className="flex items-center space-x-2 border border-border/80 p-4 rounded-xl max-w-sm">
                       <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                      <span className="text-xs text-muted-foreground font-semibold">Analyst compiling SQL query...</span>
+                      <span className="text-xs text-muted-foreground">Analyst compiling SQL query...</span>
                     </div>
                   </div>
                 )}

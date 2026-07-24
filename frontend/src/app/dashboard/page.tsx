@@ -254,9 +254,9 @@ export default function DashboardPage() {
                               setCurrentConversationId(conv.conversation_id);
                               setActiveView('chat');
                             }}
-                            className={`group/item flex items-center justify-between px-3 py-2 rounded-xl text-xs cursor-pointer transition-colors ${isActive
+                            className={`group/item flex items-center justify-between px-3 py-2 rounded text-xs cursor-pointer transition-colors ${isActive
                                 ? 'bg-primary/10 text-primary font-medium'
-                                : 'text-muted-foreground hover:bg-muted/40 hover:text-foreground'
+                                : 'text-muted-foreground hover:bg-muted/10 hover:text-foreground'
                               }`}
                           >
                             <span className="truncate pr-2">{conv.title || "Untitled Conversation"}</span>

@@ -121,11 +121,11 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
           {isQueryResult && message.references && message.references.tables.length > 0 && (
             <div className="mt-3 flex flex-wrap items-center gap-1.5 text-[11px]">
               <span className="inline-flex items-center gap-1 text-muted-foreground font-medium">
-                <Database className="h-3 w-3" /> Referenced from:
+                Referenced from:
               </span>
               {message.references.tables.map((t) => (
                 <span key={t.table} className="relative inline-flex group/ref">
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-muted/60 border border-border/60 font-mono text-foreground/80 cursor-help">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded bg-muted/10 border border-border/60 font-mono text-foreground/80 cursor-help">
                     {t.table}
                   </span>
                   {/* Custom tooltip — instant, theme-aware, with an arrow */}
@@ -167,7 +167,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
             <div className="mt-4">
               <Tabs defaultValue="results">
                 <div className="flex justify-between items-center border-b border-border/80 pb-2">
-                  <TabsList className="bg-muted scale-95 origin-left">
+                  <TabsList className="bg-muted/10 scale-95 origin-left">
                     <TabsTrigger value="results" className="flex items-center space-x-1.5 text-xs py-1">
                       <TableIcon className="h-3.5 w-3.5" />
                       <span>Data Grid</span>
