@@ -90,9 +90,6 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
               {new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </div>
           </div>
-          <div className="h-8 w-8 rounded-full bg-muted border border-border flex items-center justify-center flex-shrink-0">
-            <MessageSquare className="h-4 w-4 text-muted-foreground" />
-          </div>
         </div>
       </div>
     );
@@ -102,10 +99,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
   return (
     <div className="flex justify-start mb-6">
       <div className="flex items-start space-x-3 max-w-[90%]">
-        <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-primary to-blue-500 flex items-center justify-center flex-shrink-0 shadow-sm">
-          <Sparkles className="h-4 w-4 text-white" />
-        </div>
-        <div className="flex-1 bg-card border border-border rounded-2xl rounded-tl-sm p-5 shadow-sm">
+        <div className="flex-1 rounded-2xl rounded-tl-sm p-5">
           {/* Explanation Text */}
           <div className="flex items-start justify-between gap-3">
             <div className="prose max-w-none text-sm text-foreground leading-relaxed font-normal whitespace-pre-wrap">

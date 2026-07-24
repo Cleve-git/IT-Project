@@ -170,7 +170,7 @@ export default function AdminPage({ defaultTab = 'analytics' }: AdminPageProps) 
               {adminNavItems.find(item => item.id === activeTab)?.label || "Admin Workspace"}
             </h1>
           </div>
-          <ThemeToggle className="h-9 w-9 rounded-lg flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer" />
+          <ThemeToggle className="h-9 w-9 rounded-lg border border-border/60 flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground transition-all cursor-pointer" />
         </header>
 
         {/* 3. Main Scrollable Content Area */}

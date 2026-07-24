@@ -166,15 +166,6 @@ export default function LandingPage() {
       {/* ── Hero section (sits on top of ColorBends) ── */}
       <section className="relative pt-24 pb-16 text-center flex flex-col items-center max-w-4xl mx-auto px-6 z-10">
 
-        <motion.span
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="inline-flex items-center text-[10px] font-bold uppercase tracking-widest text-[#F97316] bg-[#F97316]/10 px-3.5 py-1.5 rounded-full select-none"
-        >
-          CONVERSATIONAL DATA ANALYST
-        </motion.span>
-
         <motion.h1
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
